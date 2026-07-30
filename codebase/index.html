@@ -10,19 +10,42 @@
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">VLearn Prototype · CP2</p>
-          <h1>Slide thành mindmap học nhanh</h1>
+          <p class="eyebrow">JACK VLearn </p>
+          <!-- <h1>Đang xem slide, tạo mindmap ngay trong luồng học</h1> -->
         </div>
-        <div class="status-pill" id="flowStatus">Flow bấm được</div>
+        <div class="status-pill" id="flowStatus">Chưa tạo mindmap</div>
       </header>
 
-      <section class="workspace" aria-label="Slide to mindmap workspace">
+      <section class="study-section" aria-label="Nguoi hoc dang xem slide">
+        <div class="slide-viewer">
+          <div class="slide-toolbar">
+            <span>VLearn · Slide 15</span>
+            <span>AI & Prompt Engineering</span>
+          </div>
+
+          <article class="slide-page">
+            <p class="slide-kicker">Bài học</p>
+            <h2 id="slideTitle">Prompt rõ ràng giúp AI trả lời đúng ý hơn</h2>
+            <div class="slide-content" id="slideContent">
+              <p>
+                Prompt tốt cần nói rõ <mark>vai trò</mark>, <mark>nhiệm vụ</mark>,
+                <mark>ngữ cảnh</mark>, format output và tiêu chí chất lượng.
+              </p>
+              <p>
+                Nếu thiếu ngữ cảnh, mô hình dễ đoán sai hoặc trả lời quá chung. Người học nên
+                kiểm tra lại nguồn và ví dụ trước khi áp dụng vào bài làm.
+              </p>
+            </div>
+            <div class="slide-footer" id="slideFooter">Slide 15 · Prompt rõ ràng</div>
+          </article>
+        </div>
+
         <aside class="source-panel">
           <div class="panel-heading">
             <span class="step-dot">1</span>
             <div>
               <h2>Chọn nội dung</h2>
-              <p>Chọn slide hoặc dán đoạn học sinh vừa copy.</p>
+              <p>Chọn slide hiện tại hoặc dán đoạn học sinh vừa copy.</p>
             </div>
           </div>
 
@@ -35,61 +58,68 @@
           </select>
 
           <label for="studentInput">Nội dung học sinh chọn</label>
-          <textarea id="studentInput" rows="10">Prompt tốt cần nói rõ vai trò, nhiệm vụ, ngữ cảnh, format output và tiêu chí chất lượng. Nếu thiếu ngữ cảnh, mô hình dễ đoán sai hoặc trả lời quá chung.</textarea>
+          <textarea id="studentInput" rows="8">Prompt tốt cần nói rõ vai trò, nhiệm vụ, ngữ cảnh, format output và tiêu chí chất lượng. Nếu thiếu ngữ cảnh, mô hình dễ đoán sai hoặc trả lời quá chung.</textarea>
 
           <div class="source-actions">
             <button class="secondary-button" id="useExampleBtn" type="button">Đổi ví dụ</button>
             <button class="primary-button" id="generateBtn" type="button">Tạo mindmap</button>
           </div>
+
+          <p class="micro-note">
+            Nếu copy thiếu hoặc thừa, prototype sẽ báo độ chắc nguồn để học sinh kiểm tra lại.
+          </p>
         </aside>
+      </section>
 
-        <section class="mindmap-panel">
-          <div class="panel-heading">
-            <span class="step-dot">2</span>
-            <div>
-              <h2>Mindmap</h2>
-              <p id="sourceHint">AI sẽ tìm slide gần nhất và tách ý chính.</p>
-            </div>
+      <section class="mindmap-section" id="mindmapSection" aria-label="Mindmap ket qua">
+        <div class="section-heading">
+          <span class="step-dot">2</span>
+          <div>
+            <h2>Mindmap từ nội dung đã chọn</h2>
+            <p id="sourceHint">Sau khi bấm tạo, kết quả sẽ hiện ở đây.</p>
           </div>
+        </div>
 
-          <div class="mindmap-canvas" id="mindmapCanvas" aria-live="polite">
-            <div class="empty-state">
-              <strong>Sẵn sàng tạo mindmap</strong>
-              <span>Bấm “Tạo mindmap” để đi hết flow CP2.</span>
-            </div>
+        <div class="mindmap-canvas" id="mindmapCanvas" aria-live="polite">
+          <div class="empty-state">
+            <strong>Chưa có mindmap</strong>
+            <span>Quay lên phần slide, chọn nội dung rồi bấm “Tạo mindmap”.</span>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <aside class="assist-panel">
-          <div class="panel-heading">
-            <span class="step-dot">3</span>
-            <div>
-              <h2>Học tiếp</h2>
-              <p>Mock tính năng phụ nếu nhóm còn thời gian.</p>
-            </div>
+      <section class="next-section" id="nextSection" aria-label="Hoc tiep tu mindmap">
+        <div class="section-heading">
+          <span class="step-dot">3</span>
+          <div>
+            <h2>Học tiếp từ mindmap</h2>
+            <p>Phần phụ để demo học sinh dùng mindmap xong có thể ôn tiếp.</p>
           </div>
+        </div>
 
+        <div class="next-grid">
           <div class="confidence-box" id="confidenceBox">
             <span class="confidence-label">Độ chắc nguồn</span>
             <strong>Chưa chạy</strong>
             <small>Mindmap phải có slide/citation để tránh học sai.</small>
           </div>
 
-          <div class="branch-picker">
+          <div class="branch-tools">
             <label for="branchSelect">Chọn nhánh</label>
             <select id="branchSelect">
               <option>Chưa có nhánh</option>
             </select>
+            <div class="source-actions">
+              <button class="secondary-button" id="explainBtn" type="button">Giải thích nhánh</button>
+              <button class="secondary-button" id="quizBtn" type="button">Tạo quiz nhanh</button>
+            </div>
           </div>
-
-          <button class="secondary-button full" id="explainBtn" type="button">Giải thích nhánh này</button>
-          <button class="secondary-button full" id="quizBtn" type="button">Tạo quiz nhanh</button>
 
           <div class="output-box" id="sideOutput">
             <strong>Kết quả phụ</strong>
             <p>Quiz hoặc giải thích nhánh sẽ hiện ở đây.</p>
           </div>
-        </aside>
+        </div>
       </section>
     </main>
 
