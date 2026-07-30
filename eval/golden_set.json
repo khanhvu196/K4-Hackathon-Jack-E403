@@ -1,0 +1,51 @@
+[
+  {
+    "id": "case_01_happy_path",
+    "difficulty_layer": "Normal",
+    "input_source": "transcript",
+    "input_text": "Bây giờ trong một team có bạn product owner, product manager. PM ở đây mình nói P là product nhá, không phải project — nó khác nhau... Cái job project manager thường thấy ở các công ty outsourcing nhiều. Đấy là những người mà chức trách là làm thế nào để đảm bảo một dự án hoàn thành đúng tiến độ trong ngân sách cho phép... Nhưng product manager, product owner thì bộ skill rất khác. Khi làm product, không có ai đến bảo bạn 'hãy làm cái đấy đi'. Bạn phải là người tự đi tìm bài toán, giải pháp đáng làm và tìm thị trường cho nó.",
+    "expected_hierarchy": [
+      "PM (Product Manager vs Project Manager)",
+      "Project Manager (Outsourcing, Đảm bảo tiến độ, Ngân sách)",
+      "Product Manager (Tìm bài toán, Tìm giải pháp, Tìm thị trường)"
+    ],
+    "expected_behavior": "Tạo mindmap với 1 root và 2 nhánh chính so sánh Project Manager và Product Manager. Cú pháp Mermaid hợp lệ."
+  },
+  {
+    "id": "case_02_short_text",
+    "difficulty_layer": "1. Nguồn sự thật (Slide quá ngắn)",
+    "input_source": "slide",
+    "input_text": "Phát triển sản phẩm AI có gì khác",
+    "expected_hierarchy": [
+      "Phát triển sản phẩm AI có gì khác",
+      "⚠️ Nội dung slide quá ngắn để phân tích"
+    ],
+    "expected_behavior": "Không suy diễn thêm nhánh con. Tạo 1 root node và 1 nhánh cảnh báo nội dung quá ngắn."
+  },
+  {
+    "id": "case_03_flat_list",
+    "difficulty_layer": "2. Mơ hồ (Không rõ phân cấp)",
+    "input_source": "slide",
+    "input_text": "- Data requires labels\n- Used for classification and regression\n- Examples: spam detection, house price prediction\n- Requires large datasets\n- Can be prone to overfitting",
+    "expected_hierarchy": [
+      "Data requires labels",
+      "Used for classification and regression",
+      "Examples: spam detection, house price prediction",
+      "Requires large datasets",
+      "Can be prone to overfitting"
+    ],
+    "expected_behavior": "Xuất ra cấu trúc phẳng (Flat list) các ý ngang hàng dưới 1 Root Node tự trích xuất hoặc gom nhóm, không tự ý đẩy ý này làm con của ý kia nếu không chắc chắn."
+  },
+  {
+    "id": "case_04_domain_terminology",
+    "difficulty_layer": "4. Đặc thù domain (Dịch sai thuật ngữ)",
+    "input_source": "transcript",
+    "input_text": "Trong quá trình train model, nếu dữ liệu quá ít mà model lại quá phức tạp, nó sẽ học thuộc lòng cả nhiễu của dữ liệu. Hiện tượng này gọi là overfitting. Để tránh overfitting, chúng ta có thể dùng kỹ thuật regularization hoặc tăng cường data (data augmentation).",
+    "expected_hierarchy": [
+      "Overfitting",
+      "Regularization",
+      "Data augmentation"
+    ],
+    "expected_behavior": "Tuyệt đối không dịch 'overfitting' thành 'mặc quá chật' hay 'khớp quá mức', không dịch 'regularization'. Giữ nguyên thuật ngữ tiếng Anh gốc trong mindmap."
+  }
+]
