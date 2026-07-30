@@ -91,6 +91,10 @@ const sideOutput = document.querySelector("#sideOutput");
 const explainBtn = document.querySelector("#explainBtn");
 const quizBtn = document.querySelector("#quizBtn");
 const flowStatus = document.querySelector("#flowStatus");
+const mindmapSection = document.querySelector("#mindmapSection");
+const slideTitle = document.querySelector("#slideTitle");
+const slideContent = document.querySelector("#slideContent");
+const slideFooter = document.querySelector("#slideFooter");
 
 function tokenize(text) {
   return text
@@ -131,6 +135,16 @@ function detectSlide() {
       : "Nội dung hơi thiếu hoặc lệch. Prototype vẫn tạo nháp và báo cần kiểm tra.";
 
   return { slide: best.slide, confidence, reason };
+}
+
+function displaySlide(slide) {
+  slideTitle.textContent = `${slide.title} giúp học nhanh hơn`;
+  slideContent.innerHTML = slide.text
+    .split(". ")
+    .filter(Boolean)
+    .map((sentence) => `<p>${sentence.replace(/\.$/, "")}.</p>`)
+    .join("");
+  slideFooter.textContent = `${slide.source} · ${slide.title}`;
 }
 
 function renderMindmap(result) {
@@ -188,6 +202,7 @@ function updateBranches(slide) {
 function generateMindmap() {
   const result = detectSlide();
   currentMindmap = result;
+  displaySlide(result.slide);
   renderMindmap(result);
   updateConfidence(result);
   updateBranches(result.slide);
@@ -195,6 +210,7 @@ function generateMindmap() {
     <strong>Gợi ý demo</strong>
     <p>Case chuẩn: tạo mindmap có citation. Case khó: copy thiếu nội dung, hệ thống vẫn báo độ chắc để học sinh kiểm tra.</p>
   `;
+  mindmapSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function loadNextExample() {
@@ -202,6 +218,7 @@ function loadNextExample() {
   const example = slideData[exampleIndex];
   slideSelect.value = "auto";
   studentInput.value = example.text.slice(0, Math.round(example.text.length * 0.72));
+  displaySlide(example);
   sourceHint.textContent = "Ví dụ đã đổi: nội dung bị copy thiếu một phần.";
   flowStatus.textContent = "Sẵn sàng chạy lại";
 }
@@ -243,3 +260,11 @@ quizBtn.addEventListener("click", () => {
 
 generateBtn.addEventListener("click", generateMindmap);
 useExampleBtn.addEventListener("click", loadNextExample);
+slideSelect.addEventListener("change", () => {
+  const selected = slideData.find((slide) => slide.id === slideSelect.value);
+  if (selected) {
+    displaySlide(selected);
+    studentInput.value = selected.text;
+    flowStatus.textContent = "Sẵn sàng tạo mindmap";
+  }
+});

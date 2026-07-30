@@ -12,11 +12,12 @@ Khong can dev server.
 
 ## Flow demo CP2
 
-1. Chon slide nguon hoac de che do tu nhan dien.
-2. Dan noi dung hoc sinh copy vao o nhap.
+1. Man dau tien mo nhu hoc sinh dang xem slide tren VLearn.
+2. Ben canh slide, chon slide nguon hoac dan noi dung hoc sinh copy.
 3. Bam `Tao mindmap`.
-4. Xem mindmap gom chu de trung tam, 3 nhanh chinh, y con, keyword va citation slide.
-5. Thu nut `Giai thich nhanh nay` hoac `Tao quiz nhanh`.
+4. Trang tu cuon xuong phan mindmap.
+5. Xem mindmap gom chu de trung tam, 3 nhanh chinh, y con, keyword va citation slide.
+6. Cuon tiep xuong phan hoc tiep de thu `Giai thich nhanh` hoac `Tao quiz nhanh`.
 
 ## Phan dang mock
 
