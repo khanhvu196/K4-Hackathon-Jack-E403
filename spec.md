@@ -90,7 +90,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 - **Phân công thành viên:**
   * **Vũ Bảo Khánh (Product Lead & Spec):** Chịu trách nhiệm chính file `spec.md` (§1-§4), thiết kế slide, thu thập feedback validation và thuyết trình demo.
   * **Phạm Đức Hải Triều (AI Prompt & Eval Lead):** Chịu trách nhiệm chính codebase/prompts/ và thư mục eval/, thiết kế prompt Mermaid, cấu hình client gọi API LLM thật và chạy eval.
-  * **Nguyễn Hoàng Hải (Frontend UI & Repo Maintainer):** Chịu trách nhiệm chính code giao diện tương tác, HTML/CSS/JS, render Mermaid và cấu trúc thư mục repo nộp bài.
+  * **Nguyễn Xuân Hải (Frontend UI & Repo Maintainer):** Chịu trách nhiệm chính code giao diện tương tác, HTML/CSS/JS, render Mermaid và cấu trúc thư mục repo nộp bài.
 - **Willing users (3 học viên):** Học viên Hoàng Nam, Học viên Khánh Vân, Học viên Minh Đức.
 - **Kế hoạch validation (CP5):** Phỏng vấn nhanh 3 willing users theo 3 câu hỏi (độ chính xác sơ đồ, độ dễ đọc thuật ngữ, tính hữu ích của citation). Vũ Bảo Khánh ghi nhận feedback log.
 
