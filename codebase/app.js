@@ -568,58 +568,92 @@ function selectedBranch() {
   return currentMindmap.slide.branches[Number(branchSelect.value)];
 }
 
-explainBtn.addEventListener("click", () => {
+explainBtn.addEventListener("click", async () => {
   const branch = selectedBranch();
   if (!branch) {
     sideOutput.innerHTML = "<strong>Chưa có mindmap</strong><p>Hãy bấm Tạo mindmap trước.</p>";
     return;
   }
 
-  const explanationNodes = branch.nodes?.length
-    ? branch.nodes
-    : branch.leaves.map((label) => ({ label, depth: 1 }));
-  const branchItems = explanationNodes.length
-    ? explanationNodes
-        .map(
-          (node) => `
-            <li style="margin-left: ${Math.max(0, node.depth - 1) * 16}px">
-              ${escapeHtml(node.label)}
-            </li>
-          `
-        )
-        .join("")
-    : "<li>Nhánh này không có node con trong output AI.</li>";
-  const sourceLabel = currentMindmap.branchSource === "ai-output"
-    ? "Output Mermaid của AI"
-    : "Mock fallback";
+  explainBtn.disabled = true;
+  explainBtn.textContent = "AI đang giải thích...";
   sideOutput.innerHTML = `
-    <strong>${escapeHtml(branch.title)}</strong>
-    <p>Nguồn nhánh: ${sourceLabel}. Gồm ${explanationNodes.length} node con:</p>
-    <ul>${branchItems}</ul>
+    <div class="empty-state loading-state" style="min-height: 150px;">
+      <strong>AI đang phân tích nhánh</strong>
+      <span>Đang đọc cấu trúc và tạo lời giải thích...</span>
+    </div>
   `;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: branch.title,
+        leaves: branch.leaves,
+        action: "explain"
+      })
+    });
+    
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.error || "Lỗi kết nối AI.");
+    }
+    
+    sideOutput.innerHTML = `
+      <strong>Giải thích: ${escapeHtml(branch.title)}</strong>
+      <div style="margin-top: 12px;">${payload.html}</div>
+    `;
+  } catch (error) {
+    sideOutput.innerHTML = `<strong>Lỗi:</strong> <p>${escapeHtml(error.message)}</p>`;
+  } finally {
+    explainBtn.disabled = false;
+    explainBtn.textContent = "Giải thích nhánh";
+  }
 });
 
-quizBtn.addEventListener("click", () => {
+quizBtn.addEventListener("click", async () => {
   const branch = selectedBranch();
   if (!branch) {
     sideOutput.innerHTML = "<strong>Chưa có mindmap</strong><p>Hãy bấm Tạo mindmap trước.</p>";
     return;
   }
 
-  const leafQuestions = branch.leaves.length
-    ? branch.leaves
-        .map(
-          (leaf) => `<li>Giải thích bằng lời của bạn: “${escapeHtml(leaf)}”.</li>`
-        )
-        .join("")
-    : "<li>Hãy giải thích ý nghĩa của nhánh này bằng một ví dụ.</li>";
+  quizBtn.disabled = true;
+  quizBtn.textContent = "AI đang tạo quiz...";
   sideOutput.innerHTML = `
-    <strong>Quiz nhanh</strong>
-    <ul>
-      <li>Tóm tắt nhánh “${escapeHtml(branch.title)}” trong một câu.</li>
-      ${leafQuestions}
-    </ul>
+    <div class="empty-state loading-state" style="min-height: 150px;">
+      <strong>AI đang biên soạn Quiz</strong>
+      <span>Đang tạo các câu hỏi hóc búa để kiểm tra bạn...</span>
+    </div>
   `;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: branch.title,
+        leaves: branch.leaves,
+        action: "quiz"
+      })
+    });
+    
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.error || "Lỗi kết nối AI.");
+    }
+    
+    sideOutput.innerHTML = `
+      <strong>Mini Quiz: ${escapeHtml(branch.title)}</strong>
+      <div style="margin-top: 12px;">${payload.html}</div>
+    `;
+  } catch (error) {
+    sideOutput.innerHTML = `<strong>Lỗi:</strong> <p>${escapeHtml(error.message)}</p>`;
+  } finally {
+    quizBtn.disabled = false;
+    quizBtn.textContent = "Tạo quiz nhanh";
+  }
 });
 
 generateBtn.addEventListener("click", generateMindmap);

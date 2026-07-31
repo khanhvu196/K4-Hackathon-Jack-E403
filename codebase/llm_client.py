@@ -114,8 +114,64 @@ def generate_mindmap(content: str) -> str:
       ({err_str})
 """
 
+def generate_chat(branch_title: str, leaves: list, action: str) -> str:
+    """
+    Sinh câu hỏi quiz hoặc giải thích cho nhánh sơ đồ.
+    action = 'explain' | 'quiz'
+    """
+    if action == "explain":
+        system_prompt = "Bạn là một trợ lý AI giáo dục. Hãy giải thích ngắn gọn, dễ hiểu (dưới 150 chữ) về khái niệm này. Trình bày dưới dạng HTML (dùng thẻ <ul>, <li>, <strong>) để dễ hiển thị. Không dùng Markdown code block."
+    else:
+        system_prompt = "Bạn là một giáo viên. Dựa vào nội dung khái niệm, hãy tạo 2 câu hỏi trắc nghiệm ngắn (mỗi câu có 3 đáp án A, B, C và chỉ ra đáp án đúng). Trình bày dưới dạng HTML (dùng thẻ <ul>, <li>, <strong>). Không dùng Markdown code block."
+    
+    content = f"Chủ đề nhánh: {branch_title}\nCác ý phụ: {', '.join(leaves)}"
+    
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+
+    if gemini_key and genai:
+        try:
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
+            response = model.generate_content(content)
+            return response.text
+        except Exception:
+            pass
+
+    if openrouter_key and openai:
+        try:
+            client = openai.OpenAI(api_key=openrouter_key, base_url="https://openrouter.ai/api/v1")
+            response = client.chat.completions.create(
+                model=os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free"),
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.3,
+            )
+            return response.choices[0].message.content
+        except Exception:
+            pass
+
+    if openai_key and openai:
+        try:
+            client = openai.OpenAI(api_key=openai_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.3,
+            )
+            return response.choices[0].message.content
+        except Exception:
+            pass
+            
+    return "<strong>⚠️ Lỗi: Không thể kết nối tới AI để xử lý yêu cầu này. Vui lòng kiểm tra API Key.</strong>"
+
 if __name__ == "__main__":
-    # Test thử script
     test_slide = "Machine Learning có 3 loại chính: Supervised, Unsupervised và Reinforcement."
     print("Testing generate_mindmap...")
     print(generate_mindmap(test_slide))

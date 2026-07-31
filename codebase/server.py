@@ -12,9 +12,9 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from pypdf import PdfReader
 
 try:
-    from .llm_client import generate_mindmap
+    from .llm_client import generate_mindmap, generate_chat
 except ImportError:
-    from llm_client import generate_mindmap
+    from llm_client import generate_mindmap, generate_chat
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -191,6 +191,8 @@ def write_trace(content: str, mermaid_code: str, status: str, provider: str) -> 
 
 
 def configured_provider() -> str:
+    if os.getenv("OPENROUTER_API_KEY"):
+        return "openrouter"
     if os.getenv("OPENAI_API_KEY"):
         return "openai"
     if os.getenv("GEMINI_API_KEY"):
@@ -261,12 +263,12 @@ def create_mindmap():
     if provider == "none":
         return jsonify(
             ok=False,
-            error="Chưa cấu hình GEMINI_API_KEY hoặc OPENAI_API_KEY.",
+            error="Chưa cấu hình OPENROUTER_API_KEY, GEMINI_API_KEY hoặc OPENAI_API_KEY.",
         ), 503
 
     try:
         mermaid_code = normalize_mermaid(generate_mindmap(content))
-        error_markers = ("GEMINI_API_KEY", "OPENAI_API_KEY", "GEMINI_MODEL")
+        error_markers = ("GEMINI_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_MODEL")
         if any(marker in mermaid_code for marker in error_markers):
             raise RuntimeError("LLM chưa được cấu hình đúng hoặc model không khả dụng.")
 
@@ -280,6 +282,27 @@ def create_mindmap():
         )
     except Exception as exc:
         write_trace(content, str(exc), "error", provider)
+        return jsonify(ok=False, error=str(exc)), 502
+
+
+@app.post("/api/chat")
+def chat_branch():
+    payload = request.get_json(silent=True) or {}
+    branch_title = payload.get("title", "")
+    leaves = payload.get("leaves", [])
+    action = payload.get("action", "explain")
+
+    if not branch_title:
+        return jsonify(ok=False, error="Thiếu tiêu đề nhánh."), 400
+
+    provider = configured_provider()
+    if provider == "none":
+        return jsonify(ok=False, error="Chưa cấu hình API Key."), 503
+
+    try:
+        response_html = generate_chat(branch_title, leaves, action)
+        return jsonify(ok=True, html=response_html, provider=provider)
+    except Exception as exc:
         return jsonify(ok=False, error=str(exc)), 502
 
 
