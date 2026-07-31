@@ -424,12 +424,38 @@ async function renderMermaid(mermaidCode) {
   const renderId = `vlearn-mindmap-${Date.now()}`;
   const { svg } = await window.mermaid.render(renderId, mermaidCode);
   mindmapCanvas.innerHTML = `
-    <div class="mermaid-diagram">${svg}</div>
-    <details class="mermaid-source">
-      <summary>Xem mã Mermaid</summary>
-      <pre>${escapeHtml(mermaidCode)}</pre>
+    <div class="mermaid-diagram" id="${renderId}-svg">${svg}</div>
+    <details class="mermaid-source" open>
+      <summary>Chỉnh sửa mã sơ đồ (Sửa lỗi AI nếu có)</summary>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+        <textarea id="mermaidCodeEditor" style="width: 100%; height: 150px; font-family: monospace; padding: 8px;">${escapeHtml(mermaidCode)}</textarea>
+        <button id="updateMermaidBtn" class="primary-button" style="align-self: flex-start;">Lưu & Cập nhật sơ đồ</button>
+      </div>
     </details>
   `;
+
+  // Gắn sự kiện cho nút cập nhật
+  setTimeout(() => {
+    const btn = document.getElementById("updateMermaidBtn");
+    const editor = document.getElementById("mermaidCodeEditor");
+    const svgContainer = document.getElementById(`${renderId}-svg`);
+    
+    if (btn && editor && svgContainer) {
+      btn.addEventListener("click", async () => {
+        try {
+          const newCode = editor.value;
+          btn.textContent = "Đang cập nhật...";
+          const newRenderId = \`vlearn-mindmap-update-\${Date.now()}\`;
+          const { svg: newSvg } = await window.mermaid.render(newRenderId, newCode);
+          svgContainer.innerHTML = newSvg;
+          btn.textContent = "Lưu & Cập nhật sơ đồ";
+        } catch (err) {
+          alert("Lỗi cú pháp Mermaid: " + err.message);
+          btn.textContent = "Lưu & Cập nhật sơ đồ";
+        }
+      });
+    }
+  }, 100);
 }
 
 function setGenerating(isGenerating) {

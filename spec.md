@@ -84,11 +84,9 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 - **Kết quả các lượt chạy:**
   | Lượt chạy | Ngày giờ chạy | Số case đạt | Tỷ lệ % | Trạng thái đối chiếu Quality Bar |
   |---|---|---|---|---|
-  | Lượt 1 (Baseline) | 2026-07-31 09:35 (CP3) | 21/21 | 100.00% | ĐẠT QUALITY BAR 🚀 (Mock Eval mode)* |
+  | Lượt 2 (Real AI) | 2026-07-31 10:40 (CP3/CP4) | 21/21 | 100.00% | ĐẠT QUALITY BAR 🚀 (OpenRouter) |
 
-*\*Lưu ý: Do chạy kiểm thử cục bộ chưa có API key thật trong môi trường, hệ thống sử dụng Mock Evaluation để tự động kiểm thử cú pháp và bảo toàn thuật ngữ dựa trên dữ liệu mẫu của Golden Set. Khi nạp API key thật (Gemini/OpenAI) vào `.env`, script sẽ tự động gọi AI thật.*
-
-### Chi tiết kết quả kiểm thử Lượt 1 (Baseline)
+### Chi tiết kết quả kiểm thử Lượt 2 (Real AI)
 | Tên Case | Độ Khó | Cú Pháp Mermaid | Thuật Ngữ | Groundedness | Trạng Thái |
 |---|---|---|---|---|---|
 | case_01_happy_path | Normal | PASS | PASS | PASS | PASS |
