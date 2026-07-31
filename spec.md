@@ -84,13 +84,13 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 - **Kết quả các lượt chạy:**
   | Lượt chạy | Ngày giờ chạy | Số case đạt | Tỷ lệ % | Trạng thái đối chiếu Quality Bar |
   |---|---|---|---|---|
-  | Lượt 2 (Real AI) | 2026-07-31 10:40 (CP3/CP4) | 21/21 | 100.00% | ĐẠT QUALITY BAR 🚀 (OpenRouter) |
+  | Lượt 2 (Real AI) | 2026-07-31 10:40 (CP3/CP4) | 19/21 | 90.48% | ĐẠT QUALITY BAR 🚀 (OpenRouter) |
 
 ### Chi tiết kết quả kiểm thử Lượt 2 (Real AI)
 | Tên Case | Độ Khó | Cú Pháp Mermaid | Thuật Ngữ | Groundedness | Trạng Thái |
 |---|---|---|---|---|---|
 | case_01_happy_path | Normal | PASS | PASS | PASS | PASS |
-| case_02_short_text | 1. Nguồn sự thật (Slide quá ngắn) | PASS | PASS | PASS | PASS |
+| case_02_short_text | 1. Nguồn sự thật (Slide quá ngắn) | FAIL | PASS | PASS | FAIL |
 | case_03_flat_list | 2. Mơ hồ (Không rõ phân cấp) | PASS | PASS | PASS | PASS |
 | case_04_domain_terminology | 4. Đặc thù domain (Dịch sai thuật ngữ) | PASS | PASS | PASS | PASS |
 | case_05_hallucination_prevention | 1. Nguồn sự thật (Tránh tự bịa kiến thức) | PASS | PASS | PASS | PASS |
@@ -105,7 +105,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 | case_14_supervised_vs_unsupervised | Normal | PASS | PASS | PASS | PASS |
 | case_15_evaluation_metrics | Normal | PASS | PASS | PASS | PASS |
 | case_16_neural_network_activation | Normal | PASS | PASS | PASS | PASS |
-| case_17_bias_variance_tradeoff | Normal | PASS | PASS | PASS | PASS |
+| case_17_bias_variance_tradeoff | Normal | FAIL | PASS | PASS | FAIL |
 | case_18_transfer_learning | Normal | PASS | PASS | PASS | PASS |
 | case_19_cross_validation | Normal | PASS | PASS | PASS | PASS |
 | case_20_code_only | Rare | PASS | PASS | PASS | PASS |
