@@ -47,5 +47,212 @@
       "Data augmentation"
     ],
     "expected_behavior": "Tuyệt đối không dịch 'overfitting' thành 'mặc quá chật' hay 'khớp quá mức', không dịch 'regularization'. Giữ nguyên thuật ngữ tiếng Anh gốc trong mindmap."
+  },
+  {
+    "id": "case_05_hallucination_prevention",
+    "difficulty_layer": "1. Nguồn sự thật (Tránh tự bịa kiến thức)",
+    "input_source": "transcript",
+    "input_text": "Bài hôm nay chúng ta chỉ tập trung giới thiệu về mạng Neural Network đơn giản gồm 3 lớp: Input layer, Hidden layer, và Output layer. Chúng ta chưa bàn đến các loại mạng phức tạp hơn như CNN hay RNN.",
+    "expected_hierarchy": [
+      "Mạng Neural Network đơn giản",
+      "Input layer",
+      "Hidden layer",
+      "Output layer"
+    ],
+    "expected_behavior": "Chỉ liệt kê 3 lớp của mạng Neural Network đơn giản có trong đoạn văn. Tuyệt đối không thêm CNN, RNN hay các khái niệm mạng khác vào sơ đồ dù AI biết về chúng."
+  },
+  {
+    "id": "case_06_empty_slide",
+    "difficulty_layer": "1. Nguồn sự thật (Slide trống hoặc chỉ có hình ảnh)",
+    "input_source": "slide",
+    "input_text": "   ",
+    "expected_hierarchy": [
+      "⚠️ Nội dung slide quá ngắn để phân tích"
+    ],
+    "expected_behavior": "Tạo 1 root node và 1 nhánh cảnh báo nội dung quá ngắn hoặc trống."
+  },
+  {
+    "id": "case_07_vague_structure",
+    "difficulty_layer": "2. Mơ hồ (Thông tin rời rạc)",
+    "input_source": "slide",
+    "input_text": "Học máy\n- Hướng tiếp cận\n- Giải quyết bài toán\n- Cần dữ liệu sạch",
+    "expected_hierarchy": [
+      "Học máy",
+      "Hướng tiếp cận",
+      "Giải quyết bài toán",
+      "Cần dữ liệu sạch"
+    ],
+    "expected_behavior": "Sinh cấu trúc phẳng vì các ý rất rời rạc và không rõ mối liên hệ phân cấp dưới root 'Học máy'."
+  },
+  {
+    "id": "case_08_uncertain_hierarchy",
+    "difficulty_layer": "2. Mơ hồ (Thiếu chỉ thị phân cấp)",
+    "input_source": "transcript",
+    "input_text": "Có ba yếu tố cần chuẩn bị là thuật toán, phần cứng, và dữ liệu. Dữ liệu thì cần được gán nhãn cẩn thận. Thuật toán có thể là hồi quy tuyến tính.",
+    "expected_hierarchy": [
+      "Chuẩn bị",
+      "Thuật toán (Ví dụ: hồi quy tuyến tính)",
+      "Phần cứng",
+      "Dữ liệu (Cần gán nhãn cẩn thận)"
+    ],
+    "expected_behavior": "Sơ đồ phân cấp hợp lý dựa trên ý nghĩa ngữ cảnh nhưng không tự suy diễn các nhánh con không nhắc đến."
+  },
+  {
+    "id": "case_09_offtopic_casual",
+    "difficulty_layer": "3. Ngoài phạm vi (Chào hỏi/Tán gẫu)",
+    "input_source": "chatlog",
+    "input_text": "Chào bot nhé, hôm nay thời tiết Hà Nội đẹp quá, bot có muốn đi chơi với mình không?",
+    "expected_hierarchy": [
+      "⚠️ Nội dung slide quá ngắn để phân tích"
+    ],
+    "expected_behavior": "Từ chối vẽ mindmap kiến thức và hiển thị thông báo lỗi/từ chối nhẹ nhàng trong node."
+  },
+  {
+    "id": "case_10_excel_report",
+    "difficulty_layer": "3. Ngoài phạm vi (Báo cáo tài chính/Bảng tính)",
+    "input_source": "chatlog",
+    "input_text": "Mã CK, Vốn hóa, P/E, Doanh thu\nVNM, 150000, 15.4, 52000\nVIC, 180000, 22.1, 85000\nHPG, 120000, 8.5, 60000",
+    "expected_hierarchy": [
+      "⚠️ Không phải tài liệu học tập"
+    ],
+    "expected_behavior": "Nhận diện đây không phải bài giảng/slide học tập và từ chối sinh mindmap."
+  },
+  {
+    "id": "case_11_out_of_bounds_size",
+    "difficulty_layer": "3. Ngoài phạm vi (Văn bản quá dài)",
+    "input_source": "transcript",
+    "input_text": "Slide này giải thích về cấu trúc máy tính và các bộ phận chi tiết của nó nhưng lặp lại quá nhiều lần để vượt quá giới hạn ký tự tối đa của hệ thống...",
+    "expected_hierarchy": [
+      "⚠️ Nội dung vượt quá giới hạn"
+    ],
+    "expected_behavior": "Backend/Frontend chặn hoặc AI trả về node lỗi khi độ dài vượt quá giới hạn xử lý."
+  },
+  {
+    "id": "case_12_terminology_gradient_descent",
+    "difficulty_layer": "4. Đặc thù domain (Thuật ngữ tối ưu hóa)",
+    "input_source": "transcript",
+    "input_text": "Để tối ưu hàm mất mát (loss function), người ta dùng thuật toán Gradient Descent. Trong đó có các biến thể như Stochastic Gradient Descent (SGD) và Mini-batch Gradient Descent.",
+    "expected_hierarchy": [
+      "Gradient Descent",
+      "Stochastic Gradient Descent (SGD)",
+      "Mini-batch Gradient Descent",
+      "loss function"
+    ],
+    "expected_behavior": "Giữ nguyên các thuật ngữ tiếng Anh gốc như Gradient Descent, Stochastic Gradient Descent, SGD, Mini-batch Gradient Descent, loss function. Không dịch sang tiếng Việt."
+  },
+  {
+    "id": "case_13_terminology_embedding",
+    "difficulty_layer": "4. Đặc thù domain (Thuật ngữ NLP)",
+    "input_source": "slide",
+    "input_text": "Word Embedding chuyển đổi từ ngữ thành vector số. Các kỹ thuật phổ biến gồm Word2Vec, GloVe, và các mô hình Transformer-based như BERT embedding.",
+    "expected_hierarchy": [
+      "Word Embedding",
+      "Word2Vec",
+      "GloVe",
+      "BERT embedding"
+    ],
+    "expected_behavior": "Không dịch Word Embedding thành 'nhúng từ', giữ nguyên các thuật ngữ tiếng Anh gốc."
+  },
+  {
+    "id": "case_14_supervised_vs_unsupervised",
+    "difficulty_layer": "Normal",
+    "input_source": "slide",
+    "input_text": "Phân biệt học có giám sát và học không giám sát:\n- Học có giám sát (Supervised): Có nhãn (labeled data), giải quyết Classification và Regression.\n- Học không giám sát (Unsupervised): Không nhãn (unlabeled data), giải quyết Clustering và Dimensionality Reduction.",
+    "expected_hierarchy": [
+      "Supervised",
+      "Classification",
+      "Regression",
+      "Unsupervised",
+      "Clustering",
+      "Dimensionality Reduction"
+    ],
+    "expected_behavior": "Tạo cấu trúc phân nhánh rõ ràng so sánh hai phương pháp học máy có giám sát và không giám sát."
+  },
+  {
+    "id": "case_15_evaluation_metrics",
+    "difficulty_layer": "Normal",
+    "input_source": "transcript",
+    "input_text": "Trong bài toán phân loại, chúng ta dùng Accuracy, Precision, Recall và F1-score để đánh giá mô hình. Precision đo lường tỷ lệ dự đoán đúng trong số dự đoán dương.",
+    "expected_hierarchy": [
+      "Accuracy",
+      "Precision",
+      "Recall",
+      "F1-score"
+    ],
+    "expected_behavior": "Tạo mindmap với root đánh giá mô hình phân loại và các nhánh con là các metric tương ứng."
+  },
+  {
+    "id": "case_16_neural_network_activation",
+    "difficulty_layer": "Normal",
+    "input_source": "slide",
+    "input_text": "Activation Functions (Hàm kích hoạt):\n- Sigmoid: Đầu ra [0, 1], dễ bị vanishing gradient\n- ReLU: Đầu ra max(0, x), giảm thiểu vanishing gradient\n- Softmax: Dùng ở output layer cho phân loại nhiều lớp",
+    "expected_hierarchy": [
+      "Activation Functions",
+      "Sigmoid",
+      "ReLU",
+      "Softmax"
+    ],
+    "expected_behavior": "Tạo mindmap phân cấp rõ ràng các hàm kích hoạt và đặc điểm của chúng."
+  },
+  {
+    "id": "case_17_bias_variance_tradeoff",
+    "difficulty_layer": "Normal",
+    "input_source": "transcript",
+    "input_text": "Bias là độ lệch của dự đoán so với thực tế. Variance là độ nhạy của mô hình với dữ liệu huấn luyện. Bias-variance tradeoff là việc cân bằng hai đại lượng này để tránh underfitting và overfitting.",
+    "expected_hierarchy": [
+      "Bias-variance tradeoff",
+      "Bias",
+      "Variance",
+      "underfitting",
+      "overfitting"
+    ],
+    "expected_behavior": "Tạo sơ đồ phân biệt rõ ràng hai khái niệm Bias và Variance và sự đánh đổi bias-variance tradeoff."
+  },
+  {
+    "id": "case_18_transfer_learning",
+    "difficulty_layer": "Normal",
+    "input_source": "slide",
+    "input_text": "Transfer Learning (Học chuyển giao):\n- Ý tưởng: Sử dụng mô hình đã huấn luyện trước (Pre-trained model) trên tập dữ liệu lớn.\n- Lợi ích: Tiết kiệm tài nguyên tính toán, cải thiện độ chính xác trên tập dữ liệu nhỏ.",
+    "expected_hierarchy": [
+      "Transfer Learning",
+      "Pre-trained model",
+      "Lợi ích"
+    ],
+    "expected_behavior": "Tạo mindmap về Transfer learning gồm ý tưởng (Pre-trained model) và lợi ích."
+  },
+  {
+    "id": "case_19_cross_validation",
+    "difficulty_layer": "Normal",
+    "input_source": "transcript",
+    "input_text": "K-fold Cross Validation chia tập dữ liệu thành K phần bằng nhau. Mô hình được huấn luyện K lần, mỗi lần dùng K-1 phần để train và 1 phần để validation. Điều này giúp đánh giá khách quan hơn năng lực tổng quát hóa.",
+    "expected_hierarchy": [
+      "K-fold Cross Validation",
+      "K phần bằng nhau",
+      "Đánh giá khách quan"
+    ],
+    "expected_behavior": "Tạo sơ đồ mô tả phương pháp K-fold Cross Validation."
+  },
+  {
+    "id": "case_20_code_only",
+    "difficulty_layer": "Rare",
+    "input_source": "slide",
+    "input_text": "import numpy as np\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n# Test function\nprint(sigmoid(0.0))",
+    "expected_hierarchy": [
+      "sigmoid"
+    ],
+    "expected_behavior": "Nhận diện đây là code lập trình, trích xuất ý chính là cài đặt hàm Sigmoid bằng Python, không vẽ nhánh con linh tinh."
+  },
+  {
+    "id": "case_21_markdown_formatting",
+    "difficulty_layer": "Rare",
+    "input_source": "transcript",
+    "input_text": "### Bài học số #1: **Học máy**\n- *Lưu ý*: Phải dọn dẹp dữ liệu trước. -> `data cleaning`.\n- Công cụ hỗ trợ: [Pandas](https://pandas.pydata.org) & [Numpy](https://numpy.org).",
+    "expected_hierarchy": [
+      "Học máy",
+      "data cleaning",
+      "Pandas",
+      "Numpy"
+    ],
+    "expected_behavior": "Lọc bỏ các thẻ markdown định dạng như `**`, `*`, markdown link để xuất văn bản sạch trong các node Mermaid."
   }
 ]
