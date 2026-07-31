@@ -14,16 +14,26 @@
 
 ---
 
-## 🚀 Hướng dẫn chạy thử nghiệm (CP2)
+## 🚀 Hướng dẫn chạy thử nghiệm (CP3)
 
-1. Mở trực tiếp file [codebase/index.html](file:///d:/K4-Hackathon-Jack-E403/codebase/index.html) bằng trình duyệt web.
-2. Không cần cấu hình dev server hay cài đặt môi trường phức tạp ở mốc CP2.
+Chạy trong CMD tại thư mục gốc của repo:
+
+```bat
+python -m pip install -r codebase\requirements.txt
+run.bat
+```
+
+API key được đọc tự động từ `.env` (file này đã được Git ignore). Mở `http://127.0.0.1:5001`.
 
 ---
 
-## 🛠 Trạng thái Mockup (CP2)
+## 🛠 Trạng thái Prototype (CP3)
 
-Để phục vụ cho mốc **CP2 (Show được thứ bấm được)**, dự án đang triển khai ở mức **Mockup**:
-- **Dữ liệu slide/transcript:** Đang sử dụng tập dữ liệu mẫu tĩnh (gồm slide 15, 21, 28) định nghĩa trong [codebase/app.js](file:///d:/K4-Hackathon-Jack-E403/codebase/app.js).
-- **Mô hình AI:** Chưa gọi API LLM thực tế. Logic phân tích và tách ý chính đang được mô phỏng dựa trên thuật toán so khớp từ khóa đơn giản để tìm slide phù hợp nhất.
-- **Hướng nâng cấp lên CP3:** Kết nối API thực tế (Gemini/OpenAI) qua [codebase/llm_client.py](file:///d:/K4-Hackathon-Jack-E403/codebase/llm_client.py) để sinh mã Mermaid thực và tích hợp bộ đánh giá 20 test cases.
+- **AI thật ở quyết định trung tâm:** `codebase/app.js` gọi `POST /api/mindmap`; `codebase/server.py` gọi LLM qua `codebase/llm_client.py`.
+- **Dữ liệu thật:** `data/real-slides/slide_4.pdf` được trích xuất theo 26 trang bằng `pypdf`.
+- **Render:** Mermaid.js chuyển output AI thành mindmap trong giao diện HTML hiện tại.
+- **Học tiếp:** Backend parse toàn bộ Mermaid thành nhánh/node; giải thích và quiz dùng trực tiếp cấu trúc này, không gọi AI lần hai.
+- **Độ khớp nguồn:** Tỷ lệ token input xuất hiện trong text trang nguồn; không phải confidence do AI tự khai.
+- **Trace:** Mỗi lần gọi lưu input/output vào `eval/api_trace.jsonl`, không lưu API key.
+- **Fallback:** Chỉ dùng mock khi API lỗi và luôn có nhãn cảnh báo.
+- **Eval:** `eval/golden_set.json` và bảng kết quả lượt đầu do AI Prompt & Eval Lead phụ trách.

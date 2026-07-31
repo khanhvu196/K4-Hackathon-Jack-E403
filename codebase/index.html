@@ -19,25 +19,36 @@
       <section class="study-section" aria-label="Nguoi hoc dang xem slide">
         <div class="slide-viewer">
           <div class="slide-toolbar">
-            <span>VLearn · Slide 15</span>
-            <span>AI & Prompt Engineering</span>
+            <div class="slide-navigation">
+              <button
+                class="slide-nav-button"
+                id="previousSlideBtn"
+                type="button"
+                title="Slide trước"
+                aria-label="Chuyển đến slide trước"
+                disabled
+              >&#8249;</button>
+              <span id="slidePosition">Đang tải tài liệu thật...</span>
+              <button
+                class="slide-nav-button"
+                id="nextSlideBtn"
+                type="button"
+                title="Slide sau"
+                aria-label="Chuyển đến slide sau"
+                disabled
+              >&#8250;</button>
+            </div>
+            <span id="documentName">slide_4.pdf</span>
           </div>
 
-          <article class="slide-page">
-            <p class="slide-kicker">Bài học</p>
-            <h2 id="slideTitle">Prompt rõ ràng giúp AI trả lời đúng ý hơn</h2>
-            <div class="slide-content" id="slideContent">
-              <p>
-                Prompt tốt cần nói rõ <mark>vai trò</mark>, <mark>nhiệm vụ</mark>,
-                <mark>ngữ cảnh</mark>, format output và tiêu chí chất lượng.
-              </p>
-              <p>
-                Nếu thiếu ngữ cảnh, mô hình dễ đoán sai hoặc trả lời quá chung. Người học nên
-                kiểm tra lại nguồn và ví dụ trước khi áp dụng vào bài làm.
-              </p>
-            </div>
-            <div class="slide-footer" id="slideFooter">Slide 15 · Prompt rõ ràng</div>
-          </article>
+          <div class="pdf-stage">
+            <img
+              class="pdf-frame"
+              id="slideFrame"
+              src="/api/slide-image/1"
+              alt="Trang slide thật đang được chọn"
+            />
+          </div>
         </div>
 
         <aside class="source-panel">
@@ -51,14 +62,11 @@
 
           <label for="slideSelect">Slide nguồn</label>
           <select id="slideSelect">
-            <option value="auto">Tự nhận diện từ nội dung copy</option>
-            <option value="slide-15">Slide 15 · Prompt rõ ràng</option>
-            <option value="slide-21">Slide 21 · RAG và nguồn sự thật</option>
-            <option value="slide-28">Slide 28 · Agent và tool use</option>
+            <option value="">Đang đọc slide_4.pdf...</option>
           </select>
 
           <label for="studentInput">Nội dung học sinh chọn</label>
-          <textarea id="studentInput" rows="8">Prompt tốt cần nói rõ vai trò, nhiệm vụ, ngữ cảnh, format output và tiêu chí chất lượng. Nếu thiếu ngữ cảnh, mô hình dễ đoán sai hoặc trả lời quá chung.</textarea>
+          <textarea id="studentInput" rows="8" placeholder="Text trích xuất từ trang đã chọn sẽ hiện ở đây."></textarea>
 
           <div class="source-actions">
             <button class="secondary-button" id="useExampleBtn" type="button">Đổi ví dụ</button>
@@ -66,7 +74,7 @@
           </div>
 
           <p class="micro-note">
-            Nếu copy thiếu hoặc thừa, prototype sẽ báo độ chắc nguồn để học sinh kiểm tra lại.
+            Nguồn thật: slide_4.pdf. Trang không có lớp text sẽ được báo để học sinh chọn trang khác.
           </p>
         </aside>
       </section>
@@ -99,9 +107,9 @@
 
         <div class="next-grid">
           <div class="confidence-box" id="confidenceBox">
-            <span class="confidence-label">Độ chắc nguồn</span>
+            <span class="confidence-label">Độ khớp với nguồn</span>
             <strong>Chưa chạy</strong>
-            <small>Mindmap phải có slide/citation để tránh học sai.</small>
+            <small>Tính bằng mức trùng khớp giữa nội dung chọn và text của trang nguồn.</small>
           </div>
 
           <div class="branch-tools">
@@ -123,6 +131,7 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

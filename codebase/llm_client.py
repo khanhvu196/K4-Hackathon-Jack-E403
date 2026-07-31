@@ -61,15 +61,35 @@ def generate_mindmap(content: str) -> str:
     # Fallback sang Gemini
     elif gemini_key and genai:
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            system_instruction=system_prompt
-        )
-        response = model.generate_content(
-            content,
-            generation_config=genai.types.GenerationConfig(temperature=0.1)
-        )
-        return response.text
+        model_names = [
+            os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
+            "gemini-3.6-flash",
+            "gemini-3.6-flash-lite",
+        ]
+
+        last_error = None
+        for model_name in dict.fromkeys(model_names):
+            try:
+                model = genai.GenerativeModel(
+                    model_name=model_name,
+                    system_instruction=system_prompt
+                )
+                response = model.generate_content(
+                    content,
+                    generation_config=genai.types.GenerationConfig(temperature=0.1)
+                )
+                return response.text
+            except Exception as exc:
+                last_error = exc
+
+        return f"""mindmap
+  root((⚠️ Lỗi: Không gọi được Gemini))
+    [Kiểm tra model]
+      (GEMINI_MODEL)
+      (mặc định gemini-2.0-flash)
+    [Chi tiết]
+      ({type(last_error).__name__})
+"""
         
     else:
         # Fallback hiển thị báo lỗi nếu chưa cài đặt API key hoặc thiếu thư viện

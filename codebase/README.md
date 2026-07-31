@@ -1,32 +1,51 @@
 # VLearn Mindmap Prototype
 
-Prototype HTML tinh gon cho CP2.
+Prototype CP3: giao dien HTML hien tai goi AI that qua backend Python va render Mermaid.js.
 
-## Cach chay
+## Cai dat
 
-Mo truc tiep file:
+Chay mot lan trong CMD tai thu muc goc cua repo:
 
-`codebase/index.html`
+```bat
+python -m pip install -r codebase\requirements.txt
+```
 
-Khong can dev server.
+Tao `.env` tu `.env.example`, dien API key. File `.env` da duoc Git ignore.
 
-## Flow demo CP2
+## Chay CP3
 
-1. Man dau tien mo nhu hoc sinh dang xem slide tren VLearn.
-2. Ben canh slide, chon slide nguon hoac dan noi dung hoc sinh copy.
+```bat
+run.bat
+```
+
+Mo `http://127.0.0.1:5001`. Khong mo truc tiep `index.html` khi demo AI that.
+
+## Flow demo
+
+1. Xem slide va chon slide nguon hoac dan noi dung.
+2. Backend doc `data/real-slides/slide_4.pdf` va trich text theo tung trang.
 3. Bam `Tao mindmap`.
-4. Trang tu cuon xuong phan mindmap.
-5. Xem mindmap gom chu de trung tam, 3 nhanh chinh, y con, keyword va citation slide.
-6. Cuon tiep xuong phan hoc tiep de thu `Giai thich nhanh` hoac `Tao quiz nhanh`.
+4. Frontend goi `POST /api/mindmap` voi text trang dang chon.
+5. Backend goi Gemini/OpenAI qua `llm_client.py`.
+6. Mermaid.js render ket qua va trang cuon xuong phan mindmap.
+7. Trace input/output duoc luu tai `eval/api_trace.jsonl`.
 
-## Phan dang mock
+## Hoc tiep va do khop nguon
 
-- Du lieu slide la mau gia lap.
-- AI call chua ket noi API that; logic hien tai mo phong buoc nhan dien slide va tach mindmap.
-- Muc tieu hien tai la CP2: flow bam duoc tu dau den cuoi.
+- Nut mui ten tren thanh slide chuyen trang truoc/sau, dong bo anh, dropdown va text.
+- `Do khop voi nguon` = so token trong input co mat trong text trang nguon / tong token input.
+- Day la phep so khop van ban co the kiem tra, khong phai confidence do AI tu khai.
+- Backend parse toan bo Mermaid thanh `structure` gom root, nhanh va moi node con.
+- `Giai thich nhanh` va `Tao quiz nhanh` dung truc tiep `structure`; khong goi them AI.
 
-## Huong nang len CP3
+## Du lieu that
 
-- Thay `slideData` trong `app.js` bang context tu data pack/transcript.
-- Goi API AI that de sinh JSON mindmap.
-- Luu log input/output cho golden set trong `eval/`.
+- PDF mac dinh: `data/real-slides/slide_4.pdf` (26 trang).
+- `pypdf` trich text; `PyMuPDF` render anh dung trang dang chon.
+- Doi tai lieu bang bien `SLIDE_PDF_PATH` trong `.env`.
+- Trang co duoi 100 ky tu trich xuat se duoc danh dau `khong du text`.
+- PDF scan khong co lop text can OCR; prototype hien tai chua OCR.
+
+## Pham vi fallback
+
+- Neu API loi, giao dien hien fallback mock kem nhan ro rang; khong duoc dung fallback de chung minh CP3.
