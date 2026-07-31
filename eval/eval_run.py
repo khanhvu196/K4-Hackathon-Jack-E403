@@ -17,9 +17,9 @@ def mock_mermaid_generator(case):
         return """mindmap
   root((⚠️ Nội dung slide quá ngắn để phân tích))
 """
-    if "Chào bot" in input_text:
+    if "ốm" in input_text:
         return """mindmap
-  root((⚠️ Nội dung không phù hợp))
+  root(("⚠️ Nội dung không phù hợp"))
 """
     if "Mã CK" in input_text:
         return """mindmap

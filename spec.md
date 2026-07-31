@@ -97,7 +97,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 | case_06_empty_slide | 1. Nguồn sự thật (Slide trống hoặc chỉ có hình ảnh) | PASS | PASS | PASS | PASS |
 | case_07_vague_structure | 2. Mơ hồ (Thông tin rời rạc) | PASS | PASS | PASS | PASS |
 | case_08_uncertain_hierarchy | 2. Mơ hồ (Thiếu chỉ thị phân cấp) | PASS | PASS | PASS | PASS |
-| case_09_offtopic_casual | 3. Ngoài phạm vi (Chào hỏi/Tán gẫu) | PASS | PASS | PASS | PASS |
+| case_09_offtopic_casual | 3. Ngoài phạm vi (Copy nhầm nội dung/Email) | PASS | PASS | PASS | PASS |
 | case_10_excel_report | 3. Ngoài phạm vi (Báo cáo tài chính/Bảng tính) | PASS | PASS | PASS | PASS |
 | case_11_out_of_bounds_size | 3. Ngoài phạm vi (Văn bản quá dài) | PASS | PASS | PASS | PASS |
 | case_12_terminology_gradient_descent | 4. Đặc thù domain (Thuật ngữ tối ưu hóa) | PASS | PASS | PASS | PASS |

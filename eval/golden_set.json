@@ -99,9 +99,9 @@
   },
   {
     "id": "case_09_offtopic_casual",
-    "difficulty_layer": "3. Ngoài phạm vi (Chào hỏi/Tán gẫu)",
-    "input_source": "chatlog",
-    "input_text": "Chào bot nhé, hôm nay thời tiết Hà Nội đẹp quá, bot có muốn đi chơi với mình không?",
+    "difficulty_layer": "3. Ngoài phạm vi (Copy nhầm nội dung/Email)",
+    "input_source": "user_paste",
+    "input_text": "Thưa thầy, hôm nay em bị ốm nên xin phép nghỉ học môn Trí tuệ nhân tạo. Mong thầy thông cảm và cho phép em nộp bù bài tập sau ạ.",
     "expected_hierarchy": [
       "⚠️ Nội dung slide quá ngắn để phân tích"
     ],
@@ -110,7 +110,7 @@
   {
     "id": "case_10_excel_report",
     "difficulty_layer": "3. Ngoài phạm vi (Báo cáo tài chính/Bảng tính)",
-    "input_source": "chatlog",
+    "input_source": "user_paste",
     "input_text": "Mã CK, Vốn hóa, P/E, Doanh thu\nVNM, 150000, 15.4, 52000\nVIC, 180000, 22.1, 85000\nHPG, 120000, 8.5, 60000",
     "expected_hierarchy": [
       "⚠️ Không phải tài liệu học tập"
