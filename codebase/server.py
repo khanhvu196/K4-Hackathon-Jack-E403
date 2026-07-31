@@ -301,6 +301,14 @@ def chat_branch():
 
     try:
         response_html = generate_chat(branch_title, leaves, action)
+        if response_html.startswith("```html"):
+            response_html = response_html[7:]
+        if response_html.startswith("```"):
+            response_html = response_html[3:]
+        if response_html.endswith("```"):
+            response_html = response_html[:-3]
+        response_html = response_html.strip()
+        
         return jsonify(ok=True, html=response_html, provider=provider)
     except Exception as exc:
         return jsonify(ok=False, error=str(exc)), 502

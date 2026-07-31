@@ -422,10 +422,20 @@ async function renderMermaid(mermaidCode) {
   });
 
   const renderId = `vlearn-mindmap-${Date.now()}`;
-  const { svg } = await window.mermaid.render(renderId, mermaidCode);
+  let initialSvg = "";
+  let errorMsg = "";
+  
+  try {
+    const result = await window.mermaid.render(renderId, mermaidCode);
+    initialSvg = result.svg;
+  } catch (err) {
+    errorMsg = `<div style="color: #e57537; padding: 12px; background: #fff8e7; border-radius: 8px; font-weight: bold; margin-bottom: 12px;">⚠️ AI sinh mã sơ đồ bị lỗi cú pháp. Bạn hãy sửa lại code bên dưới để hiển thị sơ đồ nhé! (Chi tiết lỗi: ${escapeHtml(err.message)})</div>`;
+  }
+
   mindmapCanvas.innerHTML = `
-    <div class="mermaid-diagram" id="${renderId}-svg">${svg}</div>
-    <details class="mermaid-source" open>
+    ${errorMsg}
+    <div class="mermaid-diagram" id="${renderId}-svg">${initialSvg}</div>
+    <details class="mermaid-source" ${errorMsg ? 'open' : ''}>
       <summary>Chỉnh sửa mã sơ đồ (Sửa lỗi AI nếu có)</summary>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
         <textarea id="mermaidCodeEditor" style="width: 100%; height: 150px; font-family: monospace; padding: 8px;">${escapeHtml(mermaidCode)}</textarea>
@@ -445,10 +455,13 @@ async function renderMermaid(mermaidCode) {
         try {
           const newCode = editor.value;
           btn.textContent = "Đang cập nhật...";
-          const newRenderId = \`vlearn-mindmap-update-\${Date.now()}\`;
+          const newRenderId = `vlearn-mindmap-update-${Date.now()}`;
           const { svg: newSvg } = await window.mermaid.render(newRenderId, newCode);
           svgContainer.innerHTML = newSvg;
           btn.textContent = "Lưu & Cập nhật sơ đồ";
+          // Xóa thông báo lỗi cũ nếu có
+          const errDiv = mindmapCanvas.querySelector('div[style*="color: #e57537"]');
+          if (errDiv) errDiv.remove();
         } catch (err) {
           alert("Lỗi cú pháp Mermaid: " + err.message);
           btn.textContent = "Lưu & Cập nhật sơ đồ";
