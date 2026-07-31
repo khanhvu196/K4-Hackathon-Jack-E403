@@ -10,125 +10,147 @@
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">JACK VLearn </p>
-          <!-- <h1>Đang xem slide, tạo mindmap ngay trong luồng học</h1> -->
+          <p class="eyebrow">JACK VLearn</p>
         </div>
         <div class="status-pill" id="flowStatus">Chưa tạo mindmap</div>
       </header>
 
       <section class="study-section" aria-label="Nguoi hoc dang xem slide">
+        
+        <!-- Cột trái: Slide Viewer -->
         <div class="slide-viewer">
           <div class="slide-toolbar">
-            <div class="slide-navigation">
-              <button
-                class="slide-nav-button"
-                id="previousSlideBtn"
-                type="button"
-                title="Slide trước"
-                aria-label="Chuyển đến slide trước"
-                disabled
-              >&#8249;</button>
-              <span id="slidePosition">Đang tải tài liệu thật...</span>
-              <button
-                class="slide-nav-button"
-                id="nextSlideBtn"
-                type="button"
-                title="Slide sau"
-                aria-label="Chuyển đến slide sau"
-                disabled
-              >&#8250;</button>
-            </div>
             <span id="documentName">slide_4.pdf</span>
+            <div class="slide-navigation">
+              <span id="slidePosition">Đang tải tài liệu thật...</span>
+              <span class="scroll-hint" style="color:var(--orange); font-size: 13px;">🖱 Lăn chuột để chuyển trang</span>
+            </div>
           </div>
 
-          <div class="pdf-stage">
-            <img
-              class="pdf-frame"
-              id="slideFrame"
-              src="/api/slide-image/1"
-              alt="Trang slide thật đang được chọn"
-            />
+          <div class="pdf-stage-container" id="pdfStageContainer">
+            <div class="pdf-stage" id="pdfStage">
+              <!-- Slides will be rendered here by JS -->
+              <div class="empty-state">Đang tải tài liệu...</div>
+            </div>
+            
+            <!-- Dải chấm tiến trình -->
+            <div class="progress-dots" id="progressDots">
+              <!-- Dots rendered by JS -->
+            </div>
           </div>
         </div>
 
-        <aside class="source-panel">
-          <div class="panel-heading">
-            <span class="step-dot">1</span>
+        <!-- Cột phải: Panel AI Hợp nhất -->
+        <aside class="ai-panel" id="aiPanel">
+          <button id="togglePanelBtn" class="panel-toggle-btn" title="Ẩn/Hiện trợ lý Mindmap" aria-label="Thu gọn/Mở rộng Panel AI">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+          
+          <div class="panel-content-wrapper" id="aiPanelContent">
+            <div class="panel-heading">
+            <span class="step-dot">💬</span>
             <div>
-              <h2>Chọn nội dung</h2>
-              <p>Chọn slide hiện tại hoặc dán đoạn học sinh vừa copy.</p>
+              <h2>Trợ lý Mindmap</h2>
+              <p class="micro-note">Tạo sơ đồ tư duy và học sâu hơn từ bài giảng.</p>
             </div>
           </div>
 
-          <label for="slideSelect">Slide nguồn</label>
-          <select id="slideSelect">
-            <option value="">Đang đọc slide_4.pdf...</option>
-          </select>
-
-          <label for="studentInput">Nội dung học sinh chọn</label>
-          <textarea id="studentInput" rows="8" placeholder="Text trích xuất từ trang đã chọn sẽ hiện ở đây."></textarea>
-
-          <div class="source-actions">
-            <button class="secondary-button" id="useExampleBtn" type="button">Đổi ví dụ</button>
-            <button class="primary-button" id="generateBtn" type="button">Tạo mindmap</button>
+          <!-- Khối "Nguồn nội dung" Tabs -->
+          <div class="source-tabs">
+            <button class="tab-button active" id="tabLive" type="button">🔄 Theo trang đang xem</button>
+            <button class="tab-button" id="tabMulti" type="button">☑️ Đã chọn nhiều trang <span id="multiCount" style="display:none">(0)</span></button>
           </div>
 
-          <p class="micro-note">
-            Nguồn thật: slide_4.pdf. Trang không có lớp text sẽ được báo để học sinh chọn trang khác.
-          </p>
+          <div class="tab-content" id="tabContentLive">
+            <div class="live-status">
+              <span class="live-dot"></span> <strong>Đang xem:</strong> <span id="livePageName">Trang 1</span>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tabContentMulti" style="display:none">
+            <div class="multi-chip-list" id="multiChipList">
+              <!-- Chips rendered by JS -->
+              <div class="empty-multi">Chưa chọn trang nào. Hãy tick ☑️ vào các trang bên trái.</div>
+            </div>
+            <div class="warning-banner" id="multiWarning" style="display:none">
+              ⚠️ Với nhiều trang như vậy, mindmap sẽ được chia theo nhóm để dễ đọc hơn.
+            </div>
+          </div>
+
+          <!-- Ô Chat Mini (AI Agent) -->
+          <div class="chat-container" id="chatContainer">
+            <div class="chat-history" id="chatHistory">
+              <div class="chat-message system">
+                Xin chào! Tôi có thể giúp gì cho bạn về nội dung bài giảng này?
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <input type="text" id="chatInput" placeholder="Hỏi AI về trang này..." />
+              <button id="sendChatBtn" class="icon-button" aria-label="Gửi">➤</button>
+            </div>
+            <div class="quick-prompts">
+              <button class="quick-btn">Chỉ lấy phần ví dụ</button>
+              <button class="quick-btn">Bỏ qua đoạn định nghĩa</button>
+              <button class="quick-btn">Gộp 2 trang này thành bảng so sánh</button>
+            </div>
+          </div>
+
+          <!-- Hàng nút hành động -->
+          <div class="source-actions">
+            <button class="secondary-button" id="resetContentBtn" type="button">↻ Lấy lại nội dung trang</button>
+            <button class="primary-button" id="generateBtn" type="button">✦ Tạo mindmap</button>
+          </div>
+
+          <!-- Chỉ báo độ khớp -->
+          <div class="confidence-pill" id="confidenceBox" style="display: none;">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Khu vực kết quả mindmap -->
+          <div class="mindmap-canvas" id="mindmapCanvas" aria-live="polite">
+            <div class="empty-state">
+              <span>Chưa có mindmap.<br>Bấm 'Tạo mindmap' ở trên để bắt đầu.</span>
+            </div>
+          </div>
+
+          <!-- Khối "Học tiếp từ mindmap" -->
+          <div class="next-section" id="nextSection" style="display: none;">
+            <div class="section-heading">
+              <div>
+                <h3 style="margin:0; font-size: 16px;">Học tiếp từ mindmap</h3>
+              </div>
+            </div>
+            
+            <div class="next-grid">
+              <label for="branchSelect" class="sr-only" style="display:none">Chọn nhánh</label>
+              <select id="branchSelect" style="grid-column: 1 / -1; margin-bottom: 12px;">
+                <option>Chưa có nhánh</option>
+              </select>
+
+              <button class="secondary-button action-btn" id="explainBtn" type="button">
+                <strong>📘 Giải thích nhánh này</strong>
+              </button>
+              <button class="secondary-button action-btn" id="quizBtn" type="button">
+                <strong>📝 Tạo quiz nhanh</strong>
+              </button>
+              <button class="secondary-button action-btn" id="compareBtn" type="button">
+                <strong>🔁 So sánh với trang khác</strong>
+              </button>
+              <button class="secondary-button action-btn" id="exampleBtn" type="button">
+                <strong>💡 Cho ví dụ đời thực</strong>
+              </button>
+            </div>
+            
+            <div class="output-box" id="sideOutput">
+              <p>Kết quả phụ sẽ hiện ở đây.</p>
+            </div>
+          </div>
+          </div> <!-- End panel-content-wrapper -->
         </aside>
       </section>
 
-      <section class="mindmap-section" id="mindmapSection" aria-label="Mindmap ket qua">
-        <div class="section-heading">
-          <span class="step-dot">2</span>
-          <div>
-            <h2>Mindmap từ nội dung đã chọn</h2>
-            <p id="sourceHint">Sau khi bấm tạo, kết quả sẽ hiện ở đây.</p>
-          </div>
-        </div>
-
-        <div class="mindmap-canvas" id="mindmapCanvas" aria-live="polite">
-          <div class="empty-state">
-            <strong>Chưa có mindmap</strong>
-            <span>Quay lên phần slide, chọn nội dung rồi bấm “Tạo mindmap”.</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="next-section" id="nextSection" aria-label="Hoc tiep tu mindmap">
-        <div class="section-heading">
-          <span class="step-dot">3</span>
-          <div>
-            <h2>Học tiếp từ mindmap</h2>
-            <p>Phần phụ để demo học sinh dùng mindmap xong có thể ôn tiếp.</p>
-          </div>
-        </div>
-
-        <div class="next-grid">
-          <div class="confidence-box" id="confidenceBox">
-            <span class="confidence-label">Độ khớp với nguồn</span>
-            <strong>Chưa chạy</strong>
-            <small>Tính bằng mức trùng khớp giữa nội dung chọn và text của trang nguồn.</small>
-          </div>
-
-          <div class="branch-tools">
-            <label for="branchSelect">Chọn nhánh</label>
-            <select id="branchSelect">
-              <option>Chưa có nhánh</option>
-            </select>
-            <div class="source-actions">
-              <button class="secondary-button" id="explainBtn" type="button">Giải thích nhánh</button>
-              <button class="secondary-button" id="quizBtn" type="button">Tạo quiz nhanh</button>
-            </div>
-          </div>
-
-          <div class="output-box" id="sideOutput">
-            <strong>Kết quả phụ</strong>
-            <p>Quiz hoặc giải thích nhánh sẽ hiện ở đây.</p>
-          </div>
-        </div>
-      </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>

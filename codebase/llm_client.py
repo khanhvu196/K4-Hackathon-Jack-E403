@@ -171,6 +171,134 @@ def generate_chat(branch_title: str, leaves: list, action: str) -> str:
             
     return "<strong>⚠️ Lỗi: Không thể kết nối tới AI để xử lý yêu cầu này. Vui lòng kiểm tra API Key.</strong>"
 
+def generate_node_action(action_type: str, payload: dict) -> str:
+    """
+    Xử lý 4 hành động: explain, quiz, compare, real_example
+    """
+    valid_actions = ["explain", "quiz", "compare", "real_example"]
+    if action_type not in valid_actions:
+        return f"<strong>⚠️ Lỗi: Hành động '{action_type}' không hợp lệ.</strong>"
+
+    prompt_path = Path(__file__).parent / "prompts" / "node_actions" / f"{action_type}_prompt.md"
+    if not prompt_path.exists():
+        return f"<strong>⚠️ Lỗi: Không tìm thấy template '{action_type}_prompt.md'.</strong>"
+
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        system_prompt = f.read()
+
+    # Thay thế các biến trong template
+    system_prompt = system_prompt.replace("{{NODE_LABEL}}", payload.get("node_label", ""))
+    system_prompt = system_prompt.replace("{{NODE_CONTEXT}}", payload.get("node_context", ""))
+    system_prompt = system_prompt.replace("{{SOURCE_TEXT}}", payload.get("source_text", ""))
+    
+    if action_type == "compare":
+        system_prompt = system_prompt.replace("{{COMPARE_TEXT}}", payload.get("compare_text", ""))
+
+    content = "Hãy thực hiện yêu cầu của bạn dựa trên dữ liệu đầu vào."
+    
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+
+    if gemini_key and genai:
+        try:
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
+            response = model.generate_content(content)
+            return response.text
+        except Exception:
+            pass
+
+    if openrouter_key and openai:
+        try:
+            client = openai.OpenAI(api_key=openrouter_key, base_url="https://openrouter.ai/api/v1")
+            response = client.chat.completions.create(
+                model=os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free"),
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.3,
+            )
+            return response.choices[0].message.content
+        except Exception:
+            pass
+
+    if openai_key and openai:
+        try:
+            client = openai.OpenAI(api_key=openai_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.3,
+            )
+            return response.choices[0].message.content
+        except Exception:
+            pass
+            
+    return "<strong>⚠️ Lỗi: Không thể kết nối tới AI để xử lý yêu cầu này. Vui lòng kiểm tra API Key.</strong>"
+
+def generate_chat_agent(context_text: str, question: str) -> str:
+    prompt_path = Path(__file__).parent / "prompts" / "chat_prompt.md"
+    if not prompt_path.exists():
+        return f"<strong>⚠️ Lỗi: Không tìm thấy template 'chat_prompt.md'.</strong>"
+
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        system_prompt = f.read()
+
+    system_prompt = system_prompt.replace("{{CONTEXT}}", context_text)
+    system_prompt = system_prompt.replace("{{QUESTION}}", question)
+    
+    content = question
+    
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+
+    if gemini_key and genai:
+        try:
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
+            response = model.generate_content(content)
+            return response.text
+        except Exception:
+            pass
+
+    if openrouter_key and openai:
+        try:
+            client = openai.OpenAI(api_key=openrouter_key, base_url="https://openrouter.ai/api/v1")
+            response = client.chat.completions.create(
+                model=os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free"),
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.3,
+            )
+            return response.choices[0].message.content
+        except Exception:
+            pass
+
+    if openai_key and openai:
+        try:
+            client = openai.OpenAI(api_key=openai_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.3,
+            )
+            return response.choices[0].message.content
+        except Exception:
+            pass
+            
+    return "<strong>⚠️ Lỗi: Không thể kết nối tới AI. Vui lòng kiểm tra API Key.</strong>"
+
 if __name__ == "__main__":
     test_slide = "Machine Learning có 3 loại chính: Supervised, Unsupervised và Reinforcement."
     print("Testing generate_mindmap...")

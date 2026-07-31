@@ -1,5 +1,11 @@
 import gradio as gr
 import urllib.parse
+import os
+from dotenv import load_dotenv
+
+# Tải biến môi trường từ file .env
+load_dotenv()
+
 from codebase.llm_client import generate_mindmap
 
 def generate_html(mermaid_code):

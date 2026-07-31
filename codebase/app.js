@@ -1,406 +1,47 @@
-const mockSlideData = [
-  {
-    id: "slide-15",
-    title: "Prompt rõ ràng",
-    source: "Slide 15",
-    text:
-      "Prompt tốt cần nói rõ vai trò, nhiệm vụ, ngữ cảnh, format output và tiêu chí chất lượng. Nếu thiếu ngữ cảnh, mô hình dễ đoán sai hoặc trả lời quá chung.",
-    center: "Cấu trúc prompt tốt",
-    branches: [
-      {
-        title: "Vai trò & nhiệm vụ",
-        leaves: ["Nói AI đang đóng vai gì", "Chỉ rõ việc cần làm", "Tránh yêu cầu mơ hồ"],
-        keyword: "role, task"
-      },
-      {
-        title: "Ngữ cảnh",
-        leaves: ["Cung cấp dữ liệu nền", "Nêu giới hạn phạm vi", "Bổ sung ví dụ nếu có"],
-        keyword: "context"
-      },
-      {
-        title: "Output",
-        leaves: ["Quy định format", "Nêu độ dài mong muốn", "Chốt tiêu chí chất lượng"],
-        keyword: "format, quality bar"
-      }
-    ]
-  },
-  {
-    id: "slide-21",
-    title: "RAG và nguồn sự thật",
-    source: "Slide 21",
-    text:
-      "RAG giúp mô hình trả lời dựa trên tài liệu được truy xuất. Điểm quan trọng là chọn đúng nguồn sự thật, trích dẫn rõ và không trả lời khi không có căn cứ.",
-    center: "RAG có căn cứ",
-    branches: [
-      {
-        title: "Truy xuất",
-        leaves: ["Tìm đoạn liên quan", "Ưu tiên nguồn chính thức", "Giữ citation để kiểm tra"],
-        keyword: "retrieval"
-      },
-      {
-        title: "Grounding",
-        leaves: ["Bám vào tài liệu", "Không thêm ý ngoài nguồn", "Nêu giới hạn khi thiếu dữ liệu"],
-        keyword: "grounded answer"
-      },
-      {
-        title: "Rủi ro",
-        leaves: ["Cite sai trang", "Lấy nhầm đoạn gần giống", "Bịa khi không có căn cứ"],
-        keyword: "hallucination"
-      }
-    ]
-  },
-  {
-    id: "slide-28",
-    title: "Agent và tool use",
-    source: "Slide 28",
-    text:
-      "Agent có thể lập kế hoạch, gọi công cụ, đọc kết quả và quyết định bước tiếp theo. Thiết kế agent cần kiểm soát quyền, trạng thái, lỗi tool và điểm dừng.",
-    center: "Thiết kế agent",
-    branches: [
-      {
-        title: "Vòng lặp agent",
-        leaves: ["Lập kế hoạch", "Gọi tool", "Đọc kết quả rồi quyết định tiếp"],
-        keyword: "plan-act-observe"
-      },
-      {
-        title: "Kiểm soát",
-        leaves: ["Giới hạn quyền", "Theo dõi trạng thái", "Có điểm dừng rõ"],
-        keyword: "control"
-      },
-      {
-        title: "Xử lý lỗi",
-        leaves: ["Tool lỗi thì báo rõ", "Không lặp vô hạn", "Cho người dùng sửa hướng"],
-        keyword: "failure path"
-      }
-    ]
-  }
-];
-
-let slideData = mockSlideData;
+let slideData = [];
 let currentMindmap = null;
-let exampleIndex = 0;
 let documentPageCount = 0;
-let documentFilename = "slide_4.pdf";
+let documentFilename = "";
+let currentActiveSlideId = null;
+let selectedSlideIds = new Set();
+let activeTab = "live"; // 'live' or 'multi'
+let selectedNodeInfo = null;
 
-const slideSelect = document.querySelector("#slideSelect");
-const studentInput = document.querySelector("#studentInput");
-const generateBtn = document.querySelector("#generateBtn");
-const useExampleBtn = document.querySelector("#useExampleBtn");
-const mindmapCanvas = document.querySelector("#mindmapCanvas");
-const sourceHint = document.querySelector("#sourceHint");
-const confidenceBox = document.querySelector("#confidenceBox");
-const branchSelect = document.querySelector("#branchSelect");
-const sideOutput = document.querySelector("#sideOutput");
-const explainBtn = document.querySelector("#explainBtn");
-const quizBtn = document.querySelector("#quizBtn");
-const flowStatus = document.querySelector("#flowStatus");
-const mindmapSection = document.querySelector("#mindmapSection");
-const slideFrame = document.querySelector("#slideFrame");
-const slidePosition = document.querySelector("#slidePosition");
-const documentName = document.querySelector("#documentName");
-const previousSlideBtn = document.querySelector("#previousSlideBtn");
-const nextSlideBtn = document.querySelector("#nextSlideBtn");
+// DOM Elements
+const pdfStage = document.getElementById("pdfStage");
+const progressDots = document.getElementById("progressDots");
+const documentName = document.getElementById("documentName");
+const slidePosition = document.getElementById("slidePosition");
 
-function buildFallbackBranches(text) {
-  const ideas = text
-    .split(/\n|(?<=[.!?])\s+/)
-    .map((idea) => idea.trim())
-    .filter((idea) => idea.length >= 12)
-    .slice(0, 9);
+const tabLive = document.getElementById("tabLive");
+const tabMulti = document.getElementById("tabMulti");
+const tabContentLive = document.getElementById("tabContentLive");
+const tabContentMulti = document.getElementById("tabContentMulti");
+const multiCount = document.getElementById("multiCount");
+const multiChipList = document.getElementById("multiChipList");
+const multiWarning = document.getElementById("multiWarning");
+const livePageName = document.getElementById("livePageName");
 
-  if (!ideas.length) {
-    return [
-      {
-        title: "Không đủ text",
-        leaves: ["Trang này cần OCR hoặc chọn trang khác"],
-        keyword: "mock fallback"
-      }
-    ];
-  }
+const chatHistory = document.getElementById("chatHistory");
+const chatInput = document.getElementById("chatInput");
+const sendChatBtn = document.getElementById("sendChatBtn");
+const quickBtns = document.querySelectorAll(".quick-btn");
+const resetContentBtn = document.getElementById("resetContentBtn");
+const generateBtn = document.getElementById("generateBtn");
 
-  const branchCount = Math.min(3, ideas.length);
-  return Array.from({ length: branchCount }, (_, index) => ({
-    title: `Ý chính ${index + 1}`,
-    leaves: ideas.filter((_, ideaIndex) => ideaIndex % branchCount === index),
-    keyword: "mock fallback"
-  }));
-}
+const mindmapCanvas = document.getElementById("mindmapCanvas");
+const nextSection = document.getElementById("nextSection");
+const flowStatus = document.getElementById("flowStatus");
+const confidenceBox = document.getElementById("confidenceBox");
+const branchSelect = document.getElementById("branchSelect");
+const sideOutput = document.getElementById("sideOutput");
 
-function prepareSlide(slide) {
-  return {
-    ...slide,
-    center: slide.title,
-    branches: buildFallbackBranches(slide.text)
-  };
-}
+const explainBtn = document.getElementById("explainBtn");
+const quizBtn = document.getElementById("quizBtn");
+const compareBtn = document.getElementById("compareBtn");
+const exampleBtn = document.getElementById("exampleBtn");
 
-function tokenize(text) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w\s]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word.length > 2);
-}
-
-function sourceMatchMetrics(input, slide) {
-  const inputWords = new Set(tokenize(input));
-  const sourceWords = new Set(tokenize(slide.text));
-  const matchedWords = [...inputWords].filter((word) => sourceWords.has(word));
-  return {
-    score: matchedWords.length / Math.max(inputWords.size, 1),
-    matched: matchedWords.length,
-    total: inputWords.size
-  };
-}
-
-function detectSlide() {
-  const chosen = slideSelect.value;
-  if (chosen !== "auto") {
-    const slide = slideData.find((item) => item.id === chosen);
-    const metrics = sourceMatchMetrics(studentInput.value, slide);
-    return {
-      slide,
-      confidence: metrics.score,
-      matchedTokens: metrics.matched,
-      totalTokens: metrics.total,
-      reason: "Đã so khớp nội dung đang chọn với text của đúng trang nguồn."
-    };
-  }
-
-  const scored = slideData
-    .map((slide) => {
-      const metrics = sourceMatchMetrics(studentInput.value, slide);
-      return {
-        slide,
-        confidence: metrics.score,
-        matchedTokens: metrics.matched,
-        totalTokens: metrics.total
-      };
-    })
-    .sort((a, b) => b.confidence - a.confidence);
-
-  const best = scored[0];
-  const reason =
-    best.confidence >= 0.7
-      ? "Đã chọn trang có độ phủ token cao nhất với nội dung copy."
-      : "Nội dung chỉ khớp một phần; cần kiểm tra lại trang nguồn.";
-
-  return { ...best, reason };
-}
-
-function displaySlide(slide) {
-  const page = slide.page || 1;
-  slideFrame.src = `/api/slide-image/${page}`;
-  slideFrame.alt = `${documentFilename} · Trang ${page} · ${slide.title}`;
-  slidePosition.textContent =
-    `VLearn · Trang ${page}${documentPageCount ? ` / ${documentPageCount}` : ""}`;
-  documentName.textContent = documentFilename;
-  const currentIndex = slideData.findIndex((item) => item.id === slide.id);
-  previousSlideBtn.disabled = currentIndex <= 0;
-  nextSlideBtn.disabled = currentIndex < 0 || currentIndex >= slideData.length - 1;
-}
-
-async function loadRealSlides() {
-  try {
-    const response = await fetch("/api/slides");
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.ok) {
-      throw new Error(payload.error || "Không đọc được dữ liệu slide.");
-    }
-
-    documentPageCount = payload.document.pages;
-    documentFilename = payload.document.filename;
-    slideData = payload.slides.map(prepareSlide);
-    slideSelect.innerHTML = `
-      <option value="auto">Tự nhận diện từ nội dung copy</option>
-      ${slideData
-        .map(
-          (slide) => `
-            <option value="${slide.id}">
-              Trang ${slide.page} · ${escapeHtml(slide.title)}
-              ${slide.has_text ? "" : " · không đủ text"}
-            </option>
-          `
-        )
-        .join("")}
-    `;
-
-    const firstUsableSlide = slideData.find((slide) => slide.has_text) || slideData[0];
-    slideSelect.value = firstUsableSlide.id;
-    studentInput.value = firstUsableSlide.text;
-    displaySlide(firstUsableSlide);
-    flowStatus.textContent = "Đã tải dữ liệu slide thật";
-    sourceHint.textContent =
-      `${documentFilename} · ${documentPageCount} trang. Chọn trang rồi tạo mindmap.`;
-  } catch (error) {
-    slideData = mockSlideData;
-    slideSelect.innerHTML = `
-      <option value="auto">Dữ liệu thật lỗi · dùng mock fallback</option>
-      ${mockSlideData
-        .map((slide) => `<option value="${slide.id}">${slide.source} · ${slide.title}</option>`)
-        .join("")}
-    `;
-    studentInput.value = mockSlideData[0].text;
-    displaySlide(mockSlideData[0]);
-    flowStatus.textContent = "Không tải được PDF thật";
-    sourceHint.textContent = error.message;
-  }
-}
-
-function renderMindmap(result) {
-  const branches = result.slide.branches
-    .map(
-      (branch) => `
-        <div class="branch-row">
-          <div class="branch-node">${branch.title}</div>
-          <div class="leaf-list">
-            ${branch.leaves
-              .map(
-                (leaf) => `
-                  <div class="leaf-node">
-                    ${leaf}
-                    <span class="keyword">${branch.keyword}</span>
-                  </div>
-                `
-              )
-              .join("")}
-          </div>
-        </div>
-      `
-    )
-    .join("");
-
-  mindmapCanvas.innerHTML = `
-    <div class="mindmap">
-      <div class="center-node">
-        <small>${result.slide.source}</small>
-        <strong>${result.slide.center}</strong>
-      </div>
-      <div class="branches">${branches}</div>
-    </div>
-  `;
-}
-
-function updateConfidence(result) {
-  const percent = Math.round(result.confidence * 100);
-  const label =
-    percent >= 90 ? "Rất cao" : percent >= 70 ? "Cao" : percent >= 50 ? "Trung bình" : "Cần kiểm tra";
-  confidenceBox.innerHTML = `
-    <span class="confidence-label">Độ khớp với nguồn</span>
-    <strong>${percent}% · ${label}</strong>
-    <small>
-      ${result.reason}
-      ${result.matchedTokens}/${result.totalTokens} token có trong ${result.slide.source}.
-      Đây là so khớp văn bản, không phải confidence tự khai của AI.
-    </small>
-  `;
-  sourceHint.textContent = `${result.slide.source} · ${result.slide.title}. ${result.reason}`;
-  flowStatus.textContent = percent >= 70 ? "Mindmap đã tạo" : "Mindmap cần kiểm tra";
-}
-
-function updateBranches(slide) {
-  if (!slide.branches.length) {
-    branchSelect.innerHTML = "<option>Không đọc được nhánh từ output AI</option>";
-    return;
-  }
-  branchSelect.innerHTML = slide.branches
-    .map((branch, index) => `<option value="${index}">${escapeHtml(branch.title)}</option>`)
-    .join("");
-}
-
-function cleanMermaidLabel(rawLabel) {
-  let label = rawLabel.trim().replace(/^root\s*/i, "");
-  const wrappers = [
-    /^[\w-]*\(\((.*)\)\)$/,
-    /^[\w-]*\{\{(.*)\}\}$/,
-    /^[\w-]*\[\[(.*)\]\]$/,
-    /^[\w-]*\[(.*)\]$/,
-    /^[\w-]*\((.*)\)$/,
-    /^[\w-]*\{(.*)\}$/
-  ];
-
-  for (const wrapper of wrappers) {
-    const match = label.match(wrapper);
-    if (match) {
-      label = match[1];
-      break;
-    }
-  }
-
-  return label.replace(/^["']|["']$/g, "").trim();
-}
-
-function parseMermaidMindmap(mermaidCode) {
-  const entries = mermaidCode
-    .split(/\r?\n/)
-    .filter((line) => line.trim() && line.trim() !== "mindmap" && !line.trim().startsWith("%%"))
-    .map((line) => ({
-      indent: line.match(/^[\t ]*/)[0].replaceAll("\t", "  ").length,
-      label: cleanMermaidLabel(line)
-    }))
-    .filter((entry) => entry.label);
-
-  if (entries.length < 2) {
-    return { center: entries[0]?.label || "Mindmap", branches: [] };
-  }
-
-  const root = entries[0];
-  const childIndents = entries
-    .slice(1)
-    .filter((entry) => entry.indent > root.indent)
-    .map((entry) => entry.indent);
-  if (!childIndents.length) {
-    return { center: root.label, branches: [] };
-  }
-  const branchIndent = Math.min(...childIndents);
-  const indentLevels = [
-    ...new Set(
-      entries
-        .slice(1)
-        .filter((entry) => entry.indent >= branchIndent)
-        .map((entry) => entry.indent)
-    )
-  ].sort((a, b) => a - b);
-  const branches = [];
-  let currentBranch = null;
-
-  for (const entry of entries.slice(1)) {
-    if (entry.indent === branchIndent) {
-      currentBranch = {
-        title: entry.label,
-        leaves: [],
-        nodes: [],
-        keyword: "AI output"
-      };
-      branches.push(currentBranch);
-    } else if (entry.indent > branchIndent && currentBranch) {
-      currentBranch.leaves.push(entry.label);
-      currentBranch.nodes.push({
-        label: entry.label,
-        depth: indentLevels.indexOf(entry.indent)
-      });
-    }
-  }
-
-  return { center: root.label, branches };
-}
-
-function generateMockMindmap() {
-  const result = detectSlide();
-  currentMindmap = result;
-  displaySlide(result.slide);
-  renderMindmap(result);
-  updateConfidence(result);
-  updateBranches(result.slide);
-  sideOutput.innerHTML = `
-    <strong>Gợi ý demo</strong>
-    <p>Case chuẩn: tạo mindmap có citation. Case khó: copy thiếu nội dung, hệ thống vẫn báo độ chắc để học sinh kiểm tra.</p>
-  `;
-  mindmapSection.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
+// Utilities
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -410,274 +51,692 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-async function renderMermaid(mermaidCode) {
-  if (!window.mermaid) {
-    throw new Error("Không tải được Mermaid.js.");
-  }
-
-  window.mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: "strict",
-    theme: "neutral"
-  });
-
-  const renderId = `vlearn-mindmap-${Date.now()}`;
-  let initialSvg = "";
-  let errorMsg = "";
-  
-  try {
-    const result = await window.mermaid.render(renderId, mermaidCode);
-    initialSvg = result.svg;
-  } catch (err) {
-    errorMsg = `<div style="color: #e57537; padding: 12px; background: #fff8e7; border-radius: 8px; font-weight: bold; margin-bottom: 12px;">⚠️ AI sinh mã sơ đồ bị lỗi cú pháp. Bạn hãy sửa lại code bên dưới để hiển thị sơ đồ nhé! (Chi tiết lỗi: ${escapeHtml(err.message)})</div>`;
-  }
-
-  mindmapCanvas.innerHTML = `
-    ${errorMsg}
-    <div class="mermaid-diagram" id="${renderId}-svg">${initialSvg}</div>
-    <details class="mermaid-source" ${errorMsg ? 'open' : ''}>
-      <summary>Chỉnh sửa mã sơ đồ (Sửa lỗi AI nếu có)</summary>
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-        <textarea id="mermaidCodeEditor" style="width: 100%; height: 150px; font-family: monospace; padding: 8px;">${escapeHtml(mermaidCode)}</textarea>
-        <button id="updateMermaidBtn" class="primary-button" style="align-self: flex-start;">Lưu & Cập nhật sơ đồ</button>
-      </div>
-    </details>
-  `;
-
-  // Gắn sự kiện cho nút cập nhật
-  setTimeout(() => {
-    const btn = document.getElementById("updateMermaidBtn");
-    const editor = document.getElementById("mermaidCodeEditor");
-    const svgContainer = document.getElementById(`${renderId}-svg`);
-    
-    if (btn && editor && svgContainer) {
-      btn.addEventListener("click", async () => {
-        try {
-          const newCode = editor.value;
-          btn.textContent = "Đang cập nhật...";
-          const newRenderId = `vlearn-mindmap-update-${Date.now()}`;
-          const { svg: newSvg } = await window.mermaid.render(newRenderId, newCode);
-          svgContainer.innerHTML = newSvg;
-          btn.textContent = "Lưu & Cập nhật sơ đồ";
-          // Xóa thông báo lỗi cũ nếu có
-          const errDiv = mindmapCanvas.querySelector('div[style*="color: #e57537"]');
-          if (errDiv) errDiv.remove();
-        } catch (err) {
-          alert("Lỗi cú pháp Mermaid: " + err.message);
-          btn.textContent = "Lưu & Cập nhật sơ đồ";
-        }
-      });
-    }
-  }, 100);
+function clearMindmap() {
+    currentMindmap = null;
+    mindmapCanvas.innerHTML = `<div class="empty-state"><span>Chưa có mindmap.<br>Bấm 'Tạo mindmap' ở trên để bắt đầu.</span></div>`;
+    mindmapCanvas.classList.add("is-empty");
+    nextSection.style.display = "none";
+    confidenceBox.style.display = "none";
+    flowStatus.textContent = "Chưa tạo mindmap";
+    sideOutput.innerHTML = "<p>Kết quả phụ sẽ hiện ở đây.</p>";
 }
 
+function getContextText() {
+    let combinedText = "";
+    if (activeTab === "live") {
+        if (currentActiveSlideId) {
+            const slide = slideData.find(s => s.id === currentActiveSlideId);
+            if (slide) combinedText = slide.text;
+        }
+    } else {
+        slideData.forEach(slide => {
+            if (selectedSlideIds.has(slide.id)) {
+                combinedText += `— Trang ${slide.page} (${slide.title}) —\n${slide.text}\n\n`;
+            }
+        });
+    }
+    return combinedText.trim();
+}
+
+function getContextPages() {
+    if (activeTab === "live") {
+        return currentActiveSlideId ? [parseInt(currentActiveSlideId.replace("pdf-page-", ""))] : [];
+    } else {
+        return Array.from(selectedSlideIds).map(id => parseInt(id.replace("pdf-page-", "")));
+    }
+}
+
+function syncInputContent() {
+    // Không còn textarea tĩnh, chỉ dọn dẹp mindmap khi đổi trang
+    clearMindmap();
+}
+
+function switchTab(tab) {
+    activeTab = tab;
+    if (tab === "live") {
+        tabLive.classList.add("active");
+        tabMulti.classList.remove("active");
+        tabContentLive.style.display = "block";
+        tabContentMulti.style.display = "none";
+    } else {
+        tabMulti.classList.add("active");
+        tabLive.classList.remove("active");
+        tabContentLive.style.display = "none";
+        tabContentMulti.style.display = "block";
+    }
+    syncInputContent();
+}
+
+function updateMultiSelectUI() {
+    multiCount.textContent = `(${selectedSlideIds.size})`;
+    multiCount.style.display = selectedSlideIds.size > 0 ? "inline" : "none";
+    
+    if (selectedSlideIds.size > 0) {
+        let chipsHTML = "";
+        slideData.forEach(slide => {
+            if (selectedSlideIds.has(slide.id)) {
+                chipsHTML += `<div class="multi-chip">Trang ${slide.page} · ${escapeHtml(slide.title)} <span class="chip-close" data-id="${slide.id}">×</span></div>`;
+            }
+        });
+        multiChipList.innerHTML = chipsHTML;
+        
+        document.querySelectorAll(".chip-close").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = e.target.getAttribute("data-id");
+                toggleSlideSelection(id, false);
+            });
+        });
+        
+        multiWarning.style.display = selectedSlideIds.size >= 6 ? "block" : "none";
+        if(activeTab === "live") {
+            switchTab("multi");
+        } else {
+            syncInputContent();
+        }
+    } else {
+        multiChipList.innerHTML = `<div class="empty-multi">Chưa chọn trang nào. Hãy tick ☑️ vào các trang bên trái.</div>`;
+        multiWarning.style.display = "none";
+        if(activeTab === "multi") {
+             syncInputContent();
+        }
+    }
+    
+    // Update checkboxes in UI
+    document.querySelectorAll(".slide-checkbox-container input").forEach(cb => {
+        cb.checked = selectedSlideIds.has(cb.getAttribute("data-id"));
+    });
+}
+
+function toggleSlideSelection(slideId, isSelected) {
+    if (isSelected) {
+        selectedSlideIds.add(slideId);
+    } else {
+        selectedSlideIds.delete(slideId);
+    }
+    
+    const frame = document.querySelector(`.pdf-frame[data-id="${slideId}"]`);
+    if (frame) {
+        if (isSelected) frame.classList.add("is-selected");
+        else frame.classList.remove("is-selected");
+    }
+    
+    updateMultiSelectUI();
+}
+
+// Render slides
+function renderSlides() {
+    documentName.textContent = documentFilename;
+    pdfStage.innerHTML = "";
+    progressDots.innerHTML = "";
+    
+    slideData.forEach(slide => {
+        // Render Card
+        const wrapper = document.createElement("div");
+        wrapper.className = "slide-card-wrapper";
+        wrapper.id = `wrapper-${slide.id}`;
+        
+        wrapper.innerHTML = `
+            <img class="pdf-frame" data-id="${slide.id}" src="/api/slide-image/${slide.page}" alt="Trang ${slide.page}">
+            <label class="slide-checkbox-container">
+                ☑️ Chọn trang này
+                <input type="checkbox" data-id="${slide.id}">
+            </label>
+        `;
+        pdfStage.appendChild(wrapper);
+        
+        // Checkbox logic
+        const cb = wrapper.querySelector("input");
+        cb.addEventListener("change", (e) => {
+            toggleSlideSelection(slide.id, e.target.checked);
+        });
+        
+        // Render Dot
+        const dot = document.createElement("button");
+        dot.className = "dot";
+        dot.setAttribute("data-target", `wrapper-${slide.id}`);
+        dot.title = `Trang ${slide.page}`;
+        dot.addEventListener("click", () => {
+            wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        progressDots.appendChild(dot);
+    });
+    
+    setupScrollSpy();
+}
+
+function setupScrollSpy() {
+    const wrappers = document.querySelectorAll(".slide-card-wrapper");
+    // Add scroll event listener with debounce as fallback/enhancement
+    let isScrolling;
+    pdfStage.addEventListener('scroll', () => {
+        window.clearTimeout(isScrolling);
+        isScrolling = setTimeout(() => {
+            let closestSlide = null;
+            let minDistance = Infinity;
+            const stageCenter = pdfStage.getBoundingClientRect().top + pdfStage.clientHeight / 2;
+
+            wrappers.forEach(w => {
+                const rect = w.getBoundingClientRect();
+                const wrapperCenter = rect.top + rect.height / 2;
+                const distance = Math.abs(wrapperCenter - stageCenter);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestSlide = w;
+                }
+            });
+
+            if (closestSlide) {
+                const slideId = closestSlide.id.replace("wrapper-", "");
+                setActiveSlide(slideId);
+            }
+        }, 80);
+    });
+}
+
+function setActiveSlide(slideId) {
+    if (currentActiveSlideId === slideId) return;
+    currentActiveSlideId = slideId;
+    
+    const slide = slideData.find(s => s.id === slideId);
+    if (!slide) return;
+    
+    // Update dots
+    document.querySelectorAll(".dot").forEach(d => d.classList.remove("active"));
+    const activeDot = document.querySelector(`.dot[data-target="wrapper-${slideId}"]`);
+    if (activeDot) activeDot.classList.add("active");
+    
+    // Update frames
+    document.querySelectorAll(".pdf-frame").forEach(f => f.classList.remove("is-viewing"));
+    const frame = document.querySelector(`.pdf-frame[data-id="${slideId}"]`);
+    if (frame) frame.classList.add("is-viewing");
+    
+    // Update UI
+    slidePosition.textContent = `Trang ${slide.page} / ${documentPageCount}`;
+    livePageName.textContent = `Trang ${slide.page} · ${slide.title}`;
+    
+    if (activeTab === "live") {
+        syncInputContent();
+    }
+}
+
+async function loadRealSlides() {
+    try {
+        const response = await fetch("/api/slides");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.ok) {
+            throw new Error(payload.error || "Không đọc được dữ liệu slide.");
+        }
+        
+        documentPageCount = payload.document.pages;
+        documentFilename = payload.document.filename;
+        slideData = payload.slides;
+        
+        renderSlides();
+        
+        // Initial active slide
+        if (slideData.length > 0) {
+            setActiveSlide(slideData[0].id);
+            // Trigger first active state explicitly if intersection observer delays
+            const firstWrapper = document.getElementById(`wrapper-${slideData[0].id}`);
+            if(firstWrapper) firstWrapper.scrollIntoView({ behavior: "instant", block: "center" });
+        }
+        
+    } catch (error) {
+        pdfStage.innerHTML = `<div class="empty-state" style="color:var(--red-accent)">Lỗi tải dữ liệu: ${escapeHtml(error.message)}<br>Hãy chắc chắn bạn đang chạy server.py</div>`;
+    }
+}
+
+// Generate Mindmap Logic
 function setGenerating(isGenerating) {
-  generateBtn.disabled = isGenerating;
-  generateBtn.textContent = isGenerating ? "AI đang tạo..." : "Tạo mindmap";
+    generateBtn.disabled = isGenerating;
+    generateBtn.textContent = isGenerating ? "AI đang tạo..." : "✦ Tạo mindmap";
 }
 
 async function generateMindmap() {
-  const content = studentInput.value.trim();
-  if (!content) {
-    flowStatus.textContent = "Thiếu nội dung";
-    studentInput.focus();
-    return;
-  }
-
-  const result = detectSlide();
-  displaySlide(result.slide);
-  setGenerating(true);
-  flowStatus.textContent = "Đang gọi AI thật...";
-  mindmapCanvas.innerHTML = `
-    <div class="empty-state loading-state">
-      <strong>AI đang phân tích nội dung</strong>
-      <span>Đang tạo chủ đề trung tâm, nhánh chính và ý con.</span>
-    </div>
-  `;
-  mindmapSection.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  try {
-    const response = await fetch("/api/mindmap", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content,
-        source: result.slide.source
-      })
-    });
-    const payload = await response.json().catch(() => ({}));
-
-    if (!response.ok || !payload.ok) {
-      throw new Error(payload.error || `API trả lỗi HTTP ${response.status}.`);
-    }
-
-    await renderMermaid(payload.mermaid);
-    const parsedMindmap = payload.structure || parseMermaidMindmap(payload.mermaid);
-    const aiSlide = {
-      ...result.slide,
-      center: parsedMindmap.center,
-      branches: parsedMindmap.branches
-    };
-    currentMindmap = {
-      ...result,
-      slide: aiSlide,
-      mermaid: payload.mermaid,
-      branchSource: "ai-output"
-    };
-    updateConfidence(result);
-    updateBranches(aiSlide);
-    flowStatus.textContent = "AI đã tạo mindmap";
-    sourceHint.textContent =
-      `${result.slide.source} · AI thật qua ${payload.provider}. Trace đã lưu trong eval/api_trace.jsonl.`;
-    sideOutput.innerHTML = `
-      <strong>Kết quả CP3</strong>
-      <p>Mindmap sinh từ AI thật. Phần Học tiếp đã đọc ${parsedMindmap.branches.length} nhánh trực tiếp từ output Mermaid.</p>
-    `;
-  } catch (error) {
-    generateMockMindmap();
-    flowStatus.textContent = "AI lỗi · đang xem bản mock";
-    sourceHint.textContent =
-      `Không gọi được AI: ${error.message} Kết quả hiện tại là mock để flow demo không bị dừng.`;
-    sideOutput.innerHTML = `
-      <strong>AI chưa chạy</strong>
-      <p>${escapeHtml(error.message)} Hãy chạy trang qua server.py và kiểm tra API key.</p>
-    `;
-  } finally {
-    setGenerating(false);
-  }
-}
-
-function loadNextExample() {
-  const usableSlides = slideData.filter((slide) => slide.has_text !== false);
-  exampleIndex = (exampleIndex + 1) % usableSlides.length;
-  selectSlide(usableSlides[exampleIndex]);
-}
-
-function selectSlide(slide) {
-  if (!slide) return;
-  slideSelect.value = slide.id;
-  studentInput.value = slide.text;
-  displaySlide(slide);
-  sourceHint.textContent = `${slide.source} · dữ liệu thật từ PDF.`;
-  flowStatus.textContent = slide.has_text
-    ? "Sẵn sàng tạo mindmap"
-    : "Trang này không đủ text";
-}
-
-function moveSlide(offset) {
-  const currentId = slideSelect.value === "auto"
-    ? detectSlide().slide.id
-    : slideSelect.value;
-  const currentIndex = slideData.findIndex((slide) => slide.id === currentId);
-  const targetIndex = Math.min(
-    Math.max(currentIndex + offset, 0),
-    slideData.length - 1
-  );
-  selectSlide(slideData[targetIndex]);
-}
-
-function selectedBranch() {
-  if (!currentMindmap) return null;
-  return currentMindmap.slide.branches[Number(branchSelect.value)];
-}
-
-explainBtn.addEventListener("click", async () => {
-  const branch = selectedBranch();
-  if (!branch) {
-    sideOutput.innerHTML = "<strong>Chưa có mindmap</strong><p>Hãy bấm Tạo mindmap trước.</p>";
-    return;
-  }
-
-  explainBtn.disabled = true;
-  explainBtn.textContent = "AI đang giải thích...";
-  sideOutput.innerHTML = `
-    <div class="empty-state loading-state" style="min-height: 150px;">
-      <strong>AI đang phân tích nhánh</strong>
-      <span>Đang đọc cấu trúc và tạo lời giải thích...</span>
-    </div>
-  `;
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: branch.title,
-        leaves: branch.leaves,
-        action: "explain"
-      })
-    });
-    
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.ok) {
-      throw new Error(payload.error || "Lỗi kết nối AI.");
+    const content = getContextText();
+    if (!content) {
+        alert("Không có nội dung nào được chọn để tạo mindmap.");
+        return;
     }
     
-    sideOutput.innerHTML = `
-      <strong>Giải thích: ${escapeHtml(branch.title)}</strong>
-      <div style="margin-top: 12px;">${payload.html}</div>
+    setGenerating(true);
+    flowStatus.textContent = "Đang gọi AI thật...";
+    mindmapCanvas.classList.remove("is-empty");
+    mindmapCanvas.innerHTML = `
+      <div class="empty-state loading-state">
+        <strong>AI đang phân tích nội dung</strong>
+        <span>Đang tạo chủ đề trung tâm, nhánh chính và ý con.</span>
+      </div>
     `;
-  } catch (error) {
-    sideOutput.innerHTML = `<strong>Lỗi:</strong> <p>${escapeHtml(error.message)}</p>`;
-  } finally {
-    explainBtn.disabled = false;
-    explainBtn.textContent = "Giải thích nhánh";
-  }
+    
+    try {
+        const response = await fetch("/api/mindmap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                content,
+                source: activeTab === "live" ? livePageName.textContent : "Nhiều trang"
+            })
+        });
+        const payload = await response.json().catch(() => ({}));
+        
+        if (!response.ok || !payload.ok) {
+            throw new Error(payload.error || `API trả lỗi HTTP ${response.status}.`);
+        }
+        
+        await renderMermaid(payload.mermaid);
+        flowStatus.textContent = "AI đã tạo mindmap";
+        
+        // Show next section
+        nextSection.style.display = "block";
+        
+        const structure = payload.structure || { branches: [] };
+        currentMindmap = structure;
+        
+        if (structure.branches && structure.branches.length > 0) {
+            branchSelect.innerHTML = structure.branches
+                .map((b, i) => `<option value="${i}">${escapeHtml(b.title)}</option>`)
+                .join("");
+        } else {
+            branchSelect.innerHTML = "<option>Chưa có nhánh cụ thể</option>";
+        }
+        
+        sideOutput.innerHTML = `<p>Hãy chọn một nhánh và nhấn nút bên trên để học sâu hơn.</p>`;
+        
+    } catch (error) {
+        mindmapCanvas.classList.add("is-empty");
+        mindmapCanvas.innerHTML = `<div class="empty-state"><span style="color:var(--red-accent)">Lỗi AI: ${escapeHtml(error.message)}</span></div>`;
+        flowStatus.textContent = "Lỗi tạo mindmap";
+    } finally {
+        setGenerating(false);
+    }
+}
+
+async function renderMermaid(mermaidCode) {
+    if (!window.mermaid) {
+        throw new Error("Không tải được Mermaid.js.");
+    }
+    window.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+            fontFamily: "Inter, sans-serif",
+            primaryColor: "#e3f2fd",       
+            primaryBorderColor: "#1e88e5",
+            primaryTextColor: "#0d47a1",
+            lineColor: "#90caf9",
+            textColor: "#333",
+            
+            // Mermaid mindmap uses pie variables for branch distinct coloring
+            pie1: "#e3f2fd", // Xanh dương pastel
+            pie2: "#e8f5e9", // Xanh lá pastel
+            pie3: "#fff3e0", // Cam pastel
+            pie4: "#f3e5f5", // Tím pastel
+            pie5: "#e0f7fa", // Cyan pastel
+            pie6: "#fbe9e7", // Đỏ pastel
+            
+            pieTitleTextSize: "20px",
+        },
+        mindmap: {
+            padding: 16,
+            maxNodeWidth: 250
+        }
+    });
+    
+    const renderId = `vlearn-mindmap-${Date.now()}`;
+    const { svg } = await window.mermaid.render(renderId, mermaidCode);
+    mindmapCanvas.innerHTML = `
+      <div class="mermaid-diagram">${svg}</div>
+      <details class="mermaid-source">
+        <summary>Xem mã Mermaid</summary>
+        <pre>${escapeHtml(mermaidCode)}</pre>
+      </details>
+    `;
+
+    // Render inline
+    const targetSlideId = activeTab === "live" && currentActiveSlideId 
+        ? currentActiveSlideId 
+        : Array.from(selectedSlideIds).pop();
+
+    let inlineSvgEl = null;
+
+    if (targetSlideId) {
+        const slideWrapper = document.getElementById(`wrapper-${targetSlideId}`);
+        if (slideWrapper) {
+            // Find existing inline mindmap after this wrapper and remove it
+            const existing = slideWrapper.nextElementSibling;
+            if (existing && existing.classList.contains("inline-mindmap-block")) {
+                existing.remove();
+            }
+            
+            // Create new inline block
+            const inlineBlock = document.createElement("div");
+            inlineBlock.className = "inline-mindmap-block";
+            inlineBlock.setAttribute("data-ignore-spy", "true");
+            
+            inlineBlock.innerHTML = `
+                <div class="inline-mindmap-header">
+                    <h3 class="inline-mindmap-title">Mindmap Tổng hợp</h3>
+                    <div class="inline-mindmap-actions">
+                        <button class="close-inline-btn" title="Đóng">✕</button>
+                    </div>
+                </div>
+                <div class="inline-mindmap-content">
+                    <div class="mermaid-diagram">${svg}</div>
+                </div>
+            `;
+            
+            slideWrapper.insertAdjacentElement("afterend", inlineBlock);
+            inlineBlock.querySelector(".close-inline-btn").addEventListener("click", () => inlineBlock.remove());
+            
+            inlineSvgEl = inlineBlock.querySelector("svg");
+            
+            // Cuộn mượt đến block
+            inlineBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // Function to attach click listeners to a mermaid SVG container
+    const attachNodeListeners = (svgEl) => {
+        if (!svgEl) return;
+        const nodes = svgEl.querySelectorAll(".node");
+        nodes.forEach(node => {
+            node.style.cursor = "pointer";
+            node.addEventListener("click", () => {
+                // Clear selection in all SVGs (both panel and inline)
+                document.querySelectorAll(".mermaid-diagram svg .node").forEach(n => n.style.opacity = "1");
+                
+                // Highlight current in all matching nodes (we can just highlight the clicked one)
+                // For simplicity, highlight just the clicked one, but to be robust we should find both
+                document.querySelectorAll(".mermaid-diagram svg .node").forEach(n => {
+                    n.style.opacity = "0.6";
+                });
+                node.style.opacity = "1";
+                
+                const textElements = node.querySelectorAll("text, foreignObject div");
+                let labelText = "";
+                textElements.forEach(t => labelText += t.textContent + " ");
+                labelText = labelText.trim();
+                
+                selectedNodeInfo = {
+                    label: labelText,
+                    context: "Một phần của mindmap"
+                };
+                
+                sideOutput.innerHTML = `<p>Đã chọn nhánh: <strong>${escapeHtml(labelText)}</strong>. Hãy bấm các nút bên trên để thao tác.</p>`;
+                document.querySelectorAll(".action-btn").forEach(btn => btn.disabled = false);
+            });
+        });
+    };
+
+    // Attach click listeners to mermaid nodes
+    const panelSvgEl = mindmapCanvas.querySelector("svg");
+    attachNodeListeners(panelSvgEl);
+    attachNodeListeners(inlineSvgEl);
+    
+    // Disable action buttons initially
+    document.querySelectorAll(".action-btn").forEach(btn => btn.disabled = true);
+}
+
+// Next actions API Caller
+async function callNodeAction(actionType, extraPayload = {}) {
+    if (!selectedNodeInfo) {
+        alert("Vui lòng click chọn một nhánh trên sơ đồ Mindmap trước.");
+        return;
+    }
+    
+    const source_pages = activeTab === "live" && currentActiveSlideId 
+        ? [parseInt(currentActiveSlideId.replace("pdf-page-", ""))] 
+        : Array.from(selectedSlideIds).map(id => parseInt(id.replace("pdf-page-", "")));
+
+    const payload = {
+        action_type: actionType,
+        node_label: selectedNodeInfo.label,
+        node_context: selectedNodeInfo.context,
+        source_pages: source_pages,
+        ...extraPayload
+    };
+    
+    sideOutput.innerHTML = `<div class="empty-state loading-state"><strong>AI đang xử lý...</strong></div>`;
+    
+    try {
+        const response = await fetch("/api/node-action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        
+        if (!response.ok || !data.ok) {
+            throw new Error(data.error || `Lỗi HTTP ${response.status}`);
+        }
+        
+        if (actionType === "quiz") {
+            try {
+                // Parse JSON array
+                let jsonStr = data.html.trim();
+                // If it accidentally contains markdown blocks, clean it
+                if (jsonStr.startsWith("```json")) jsonStr = jsonStr.substring(7);
+                if (jsonStr.startsWith("```")) jsonStr = jsonStr.substring(3);
+                if (jsonStr.endsWith("```")) jsonStr = jsonStr.substring(0, jsonStr.length - 3);
+                jsonStr = jsonStr.trim();
+                
+                const questions = JSON.parse(jsonStr);
+                renderInteractiveQuiz(questions);
+            } catch (e) {
+                console.error("Quiz Parse Error", e);
+                sideOutput.innerHTML = `<span style="color:var(--red-accent)">Lỗi phân tích Quiz từ AI. Xin thử lại.</span>`;
+            }
+        } else {
+            sideOutput.innerHTML = data.html;
+        }
+    } catch (error) {
+        sideOutput.innerHTML = `<span style="color:var(--red-accent)">Lỗi AI: ${escapeHtml(error.message)}</span>`;
+    }
+}
+
+let currentQuizState = { questions: [], correctCount: 0, answeredCount: 0 };
+
+function renderInteractiveQuiz(questions) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+        sideOutput.innerHTML = `<p>Không thể tạo quiz lúc này.</p>`;
+        return;
+    }
+    
+    currentQuizState = { questions, correctCount: 0, answeredCount: 0 };
+    
+    let html = `<div class="quiz-container" id="quizContainer">`;
+    
+    questions.forEach((q, qIndex) => {
+        html += `
+            <div class="quiz-question" id="quiz-q-${qIndex}">
+                <p class="quiz-question-title">Câu ${qIndex + 1}: ${escapeHtml(q.question)}</p>
+                <div class="quiz-options">
+        `;
+        
+        q.options.forEach((opt, optIndex) => {
+            html += `
+                <label class="quiz-option" id="quiz-opt-${qIndex}-${optIndex}">
+                    <input type="radio" name="quiz-${qIndex}" value="${optIndex}" onchange="handleQuizAnswer(${qIndex}, ${optIndex})">
+                    <span>${escapeHtml(opt)}</span>
+                </label>
+            `;
+        });
+        
+        html += `
+                </div>
+                <div class="quiz-explanation" id="quiz-exp-${qIndex}">
+                    <strong>Giải thích:</strong> ${escapeHtml(q.explanation)}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+        <div id="quizSummary" style="display:none"></div>
+    </div>`;
+    
+    sideOutput.innerHTML = html;
+}
+
+window.handleQuizAnswer = function(qIndex, selectedOptIndex) {
+    const q = currentQuizState.questions[qIndex];
+    const isCorrect = (selectedOptIndex === q.correct_answer);
+    
+    // Disable all options for this question
+    const qContainer = document.getElementById(`quiz-q-${qIndex}`);
+    const labels = qContainer.querySelectorAll(".quiz-option");
+    
+    labels.forEach((label, optIndex) => {
+        label.classList.add("disabled");
+        const radio = label.querySelector("input");
+        radio.disabled = true;
+        
+        if (optIndex === q.correct_answer) {
+            label.classList.add("correct");
+        } else if (optIndex === selectedOptIndex && !isCorrect) {
+            label.classList.add("incorrect");
+        }
+    });
+    
+    // Show explanation
+    const expDiv = document.getElementById(`quiz-exp-${qIndex}`);
+    expDiv.classList.add("show");
+    
+    // Update score
+    if (isCorrect) currentQuizState.correctCount++;
+    currentQuizState.answeredCount++;
+    
+    // Show summary if all answered
+    if (currentQuizState.answeredCount === currentQuizState.questions.length) {
+        const summaryDiv = document.getElementById("quizSummary");
+        summaryDiv.style.display = "block";
+        summaryDiv.innerHTML = `
+            <div class="quiz-summary">
+                Bạn đúng ${currentQuizState.correctCount} / ${currentQuizState.questions.length} câu!
+            </div>
+            <button class="quiz-retry-btn" onclick="retryQuiz()">Làm lại bài này</button>
+        `;
+    }
+};
+
+window.retryQuiz = function() {
+    renderInteractiveQuiz(currentQuizState.questions);
+};
+
+explainBtn.addEventListener("click", () => callNodeAction("explain"));
+
+quizBtn.addEventListener("click", () => callNodeAction("quiz"));
+
+compareBtn.addEventListener("click", () => {
+    if (!selectedNodeInfo) {
+        alert("Vui lòng click chọn một nhánh trên sơ đồ Mindmap trước.");
+        return;
+    }
+    
+    // Simple prompt for compare pages
+    const pageInput = prompt("Bạn muốn so sánh với (các) trang nào? Nhập số trang cách nhau bởi dấu phẩy (VD: 5,6):");
+    if (!pageInput) return;
+    
+    const compare_pages = pageInput.split(",").map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+    if (compare_pages.length === 0) {
+        alert("Số trang không hợp lệ.");
+        return;
+    }
+    
+    callNodeAction("compare", { compare_pages });
 });
 
-quizBtn.addEventListener("click", async () => {
-  const branch = selectedBranch();
-  if (!branch) {
-    sideOutput.innerHTML = "<strong>Chưa có mindmap</strong><p>Hãy bấm Tạo mindmap trước.</p>";
-    return;
-  }
+exampleBtn.addEventListener("click", () => callNodeAction("real_example"));
 
-  quizBtn.disabled = true;
-  quizBtn.textContent = "AI đang tạo quiz...";
-  sideOutput.innerHTML = `
-    <div class="empty-state loading-state" style="min-height: 150px;">
-      <strong>AI đang biên soạn Quiz</strong>
-      <span>Đang tạo các câu hỏi hóc búa để kiểm tra bạn...</span>
-    </div>
-  `;
+// Chat Logic
+function addChatMessage(message, type) {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `chat-message ${type}`;
+    msgDiv.innerHTML = message;
+    chatHistory.appendChild(msgDiv);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
 
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: branch.title,
-        leaves: branch.leaves,
-        action: "quiz"
-      })
-    });
+async function sendChat() {
+    const question = chatInput.value.trim();
+    if (!question) return;
     
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.ok) {
-      throw new Error(payload.error || "Lỗi kết nối AI.");
+    addChatMessage(escapeHtml(question), "user");
+    chatInput.value = "";
+    
+    const contextPages = getContextPages();
+    
+    // Add loading
+    const loadingId = "loading-" + Date.now();
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "chat-message system";
+    loadingDiv.id = loadingId;
+    loadingDiv.innerHTML = "<em>Đang suy nghĩ...</em>";
+    chatHistory.appendChild(loadingDiv);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+    
+    try {
+        const response = await fetch("/api/chat-agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: question, context_pages: contextPages })
+        });
+        
+        const data = await response.json();
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        
+        if (!response.ok || !data.ok) {
+            throw new Error(data.error || "Lỗi khi gọi AI");
+        }
+        
+        addChatMessage(data.reply, "system");
+        
+    } catch (error) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        addChatMessage(`Lỗi: ${escapeHtml(error.message)}`, "error");
     }
-    
-    sideOutput.innerHTML = `
-      <strong>Mini Quiz: ${escapeHtml(branch.title)}</strong>
-      <div style="margin-top: 12px;">${payload.html}</div>
-    `;
-  } catch (error) {
-    sideOutput.innerHTML = `<strong>Lỗi:</strong> <p>${escapeHtml(error.message)}</p>`;
-  } finally {
-    quizBtn.disabled = false;
-    quizBtn.textContent = "Tạo quiz nhanh";
-  }
+}
+
+sendChatBtn.addEventListener("click", sendChat);
+chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendChat();
 });
 
+quickBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+        chatInput.value = btn.textContent;
+        chatInput.focus();
+    });
+});
+
+// Event Listeners
+tabLive.addEventListener("click", () => switchTab("live"));
+tabMulti.addEventListener("click", () => switchTab("multi"));
+resetContentBtn.addEventListener("click", syncInputContent);
 generateBtn.addEventListener("click", generateMindmap);
-useExampleBtn.addEventListener("click", loadNextExample);
-previousSlideBtn.addEventListener("click", () => moveSlide(-1));
-nextSlideBtn.addEventListener("click", () => moveSlide(1));
-slideSelect.addEventListener("change", () => {
-  const selected = slideData.find((slide) => slide.id === slideSelect.value);
-  if (selected) {
-    selectSlide(selected);
-  }
+
+// Panel Toggle Logic
+const aiPanel = document.getElementById("aiPanel");
+const togglePanelBtn = document.getElementById("togglePanelBtn");
+
+function initPanelState() {
+    const isCollapsed = localStorage.getItem("vlearn_ai_panel_collapsed") === "true";
+    if (isCollapsed) {
+        aiPanel.classList.add("collapsed");
+    }
+}
+
+togglePanelBtn.addEventListener("click", () => {
+    aiPanel.classList.toggle("collapsed");
+    const isCollapsed = aiPanel.classList.contains("collapsed");
+    localStorage.setItem("vlearn_ai_panel_collapsed", isCollapsed);
 });
 
+// Init
+initPanelState();
+clearMindmap();
 loadRealSlides();

@@ -12,9 +12,9 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from pypdf import PdfReader
 
 try:
-    from .llm_client import generate_mindmap, generate_chat
+    from .llm_client import generate_mindmap, generate_chat, generate_node_action, generate_chat_agent
 except ImportError:
-    from llm_client import generate_mindmap, generate_chat
+    from llm_client import generate_mindmap, generate_chat, generate_node_action, generate_chat_agent
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -285,22 +285,45 @@ def create_mindmap():
         return jsonify(ok=False, error=str(exc)), 502
 
 
-@app.post("/api/chat")
-def chat_branch():
+@app.post("/api/node-action")
+def node_action():
     payload = request.get_json(silent=True) or {}
-    branch_title = payload.get("title", "")
-    leaves = payload.get("leaves", [])
-    action = payload.get("action", "explain")
+    action_type = payload.get("action_type", "")
+    node_label = payload.get("node_label", "")
+    node_context = payload.get("node_context", "")
+    source_pages = payload.get("source_pages", [])
+    compare_pages = payload.get("compare_pages", [])
 
-    if not branch_title:
-        return jsonify(ok=False, error="Thiếu tiêu đề nhánh."), 400
+    if not action_type or not node_label:
+        return jsonify(ok=False, error="Thiếu action_type hoặc node_label."), 400
 
     provider = configured_provider()
     if provider == "none":
         return jsonify(ok=False, error="Chưa cấu hình API Key."), 503
 
     try:
-        response_html = generate_chat(branch_title, leaves, action)
+        # Load slide texts
+        slides = load_pdf_slides()
+        source_text = ""
+        for p in source_pages:
+            s = next((s for s in slides if str(s["page"]) == str(p)), None)
+            if s: source_text += s["text"] + "\n"
+            
+        compare_text = ""
+        if action_type == "compare":
+            if not compare_pages:
+                return jsonify(ok=False, error="Thiếu trang để so sánh (compare_pages)."), 400
+            for p in compare_pages:
+                s = next((s for s in slides if str(s["page"]) == str(p)), None)
+                if s: compare_text += s["text"] + "\n"
+
+        response_html = generate_node_action(action_type, {
+            "node_label": node_label,
+            "node_context": node_context,
+            "source_text": source_text,
+            "compare_text": compare_text
+        })
+        
         if response_html.startswith("```html"):
             response_html = response_html[7:]
         if response_html.startswith("```"):
@@ -313,6 +336,39 @@ def chat_branch():
     except Exception as exc:
         return jsonify(ok=False, error=str(exc)), 502
 
+@app.post("/api/chat-agent")
+def chat_agent():
+    payload = request.get_json(silent=True) or {}
+    question = payload.get("message", "")
+    context_pages = payload.get("context_pages", [])
+
+    if not question:
+        return jsonify(ok=False, error="Thiếu câu hỏi."), 400
+
+    provider = configured_provider()
+    if provider == "none":
+        return jsonify(ok=False, error="Chưa cấu hình API Key."), 503
+
+    try:
+        slides = load_pdf_slides()
+        context_text = ""
+        for p in context_pages:
+            s = next((s for s in slides if str(s["page"]) == str(p)), None)
+            if s: context_text += s["text"] + "\n"
+
+        response_html = generate_chat_agent(context_text, question)
+        
+        if response_html.startswith("```html"):
+            response_html = response_html[7:]
+        if response_html.startswith("```"):
+            response_html = response_html[3:]
+        if response_html.endswith("```"):
+            response_html = response_html[:-3]
+        response_html = response_html.strip()
+        
+        return jsonify(ok=True, reply=response_html, provider=provider)
+    except Exception as exc:
+        return jsonify(ok=False, error=str(exc)), 502
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
