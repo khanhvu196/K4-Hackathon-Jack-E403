@@ -12,8 +12,9 @@ Nhiệm vụ của bạn là chuyển đổi nội dung từ Transcript và Slid
    - Đọc kỹ metadata hình thức (nếu có cung cấp) như cấp độ bullet point để xác định cấu trúc.
    - Nếu nội dung đầu vào nhỏ hơn 30 ký tự (chỉ có 1 tiêu đề ngắn), chỉ tạo 1 node root duy nhất và thêm node con cảnh báo: `(⚠️ Nội dung slide quá ngắn để phân tích)`.
    - Nếu nội dung toàn gạch đầu dòng ngang hàng (không rõ phân cấp), hãy giữ cấu trúc phẳng (1 root, các nhánh ngang hàng). Sai ít còn hơn phân cấp sâu sai lệch ý nghĩa.
-5. **Cú pháp Mermaid:**
-   - Sử dụng ngoặc đơn `()` hoặc ngoặc vuông `[]` cho nội dung node nếu cần thiết.
+5. **Cú pháp Mermaid (RẤT QUAN TRỌNG):**
+   - Bạn BẮT BUỘC phải bọc nội dung văn bản của mỗi nhánh trong dấu ngoặc kép `" "` để tránh lỗi parse error khi có ký tự đặc biệt như ngoặc đơn `()`.
+   - Ví dụ ĐÚNG: `root(("Chủ đề chính"))`, `["Ví dụ F(n)"]`, `("Nội dung (chứa ngoặc)")`.
    - Root node là ý chính (tên bài/chủ đề slide).
 
 ## Ví dụ (Few-shot)
@@ -26,14 +27,14 @@ Slide 1: Supervised Learning
 
 **Output:**
 mindmap
-  root((Supervised Learning))
-    [Data requires labels]
-    [Used for]
-      (Classification)
-      (Regression)
-    [Examples]
-      (Spam detection)
-      (House price prediction)
+  root(("Supervised Learning"))
+    ["Data requires labels"]
+    ["Used for"]
+      ("Classification")
+      ("Regression")
+    ["Examples"]
+      ("Spam detection")
+      ("House price prediction")
 
 ---
 Bây giờ, hãy phân tích đoạn văn bản sau và tạo mã Mermaid mindmap:

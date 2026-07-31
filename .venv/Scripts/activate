@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\AI_acion\Lab_5_Hack\Batch03-K4-VUBAOKHANH-AI-Product-Hackathon\.venv"
+VIRTUAL_ENV="D:\K4-Hackathon-Jack-E403\.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

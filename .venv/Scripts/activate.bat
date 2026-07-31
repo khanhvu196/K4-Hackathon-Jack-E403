@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\AI_acion\Lab_5_Hack\Batch03-K4-VUBAOKHANH-AI-Product-Hackathon\.venv
+set VIRTUAL_ENV=D:\K4-Hackathon-Jack-E403\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

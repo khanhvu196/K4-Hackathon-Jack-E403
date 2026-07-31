@@ -44,62 +44,74 @@ def generate_mindmap(content: str) -> str:
     # Lấy API Key từ biến môi trường
     openai_key = os.getenv("OPENAI_API_KEY")
     gemini_key = os.getenv("GEMINI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
-    # Ưu tiên OpenAI nếu cấu hình
+    errors = []
+
+    # 1. Thử Gemini đầu tiên (ưu tiên vì xử lý context dài tốt và có gói free)
+    if gemini_key and genai:
+        try:
+            genai.configure(api_key=gemini_key)
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
+            response = model.generate_content(
+                content,
+                generation_config=genai.types.GenerationConfig(temperature=0.1)
+            )
+            return response.text
+        except Exception as e:
+            errors.append(f"Gemini: {type(e).__name__}")
+
+    # 2. Nếu Gemini lỗi (vd: hết quota, sập), Fallback sang OpenRouter (nếu có key)
+    if openrouter_key and openai:
+        try:
+            client = openai.OpenAI(
+                api_key=openrouter_key,
+                base_url="https://openrouter.ai/api/v1"
+            )
+            response = client.chat.completions.create(
+                model=os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free"),
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.1,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            errors.append(f"OpenRouter: {type(e).__name__}")
+
+    # 3. Cuối cùng, Fallback sang OpenAI (chính chủ)
     if openai_key and openai:
-        client = openai.OpenAI(api_key=openai_key)
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ],
-            temperature=0.1, # Temperature thấp để tránh suy diễn (hallucinate)
-        )
-        return response.choices[0].message.content
-    
-    # Fallback sang Gemini
-    elif gemini_key and genai:
-        genai.configure(api_key=gemini_key)
-        model_names = [
-            os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
-            "gemini-3.6-flash",
-            "gemini-3.6-flash-lite",
-        ]
-
-        last_error = None
-        for model_name in dict.fromkeys(model_names):
-            try:
-                model = genai.GenerativeModel(
-                    model_name=model_name,
-                    system_instruction=system_prompt
-                )
-                response = model.generate_content(
-                    content,
-                    generation_config=genai.types.GenerationConfig(temperature=0.1)
-                )
-                return response.text
-            except Exception as exc:
-                last_error = exc
-
-        return f"""mindmap
-  root((⚠️ Lỗi: Không gọi được Gemini))
-    [Kiểm tra model]
-      (GEMINI_MODEL)
-      (mặc định gemini-2.0-flash)
-    [Chi tiết]
-      ({type(last_error).__name__})
-"""
-        
-    else:
-        # Fallback hiển thị báo lỗi nếu chưa cài đặt API key hoặc thiếu thư viện
+        try:
+            client = openai.OpenAI(api_key=openai_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content}
+                ],
+                temperature=0.1,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            errors.append(f"OpenAI: {type(e).__name__}")
+            
+    # Xử lý khi không có key nào hoặc tất cả đều thất bại
+    if not (gemini_key or openrouter_key or openai_key):
         return """mindmap
   root((⚠️ Lỗi: Cần cấu hình API Key))
-    [Bạn chưa set biến môi trường]
+    [Hãy thêm vào file .env]
       (GEMINI_API_KEY)
-      (hoặc OPENAI_API_KEY)
-    [Hoặc chưa cài thư viện]
-      (pip install google-generativeai openai)
+      (OPENROUTER_API_KEY)
+      (OPENAI_API_KEY)
+"""
+    else:
+        err_str = " | ".join(errors)
+        return f"""mindmap
+  root((⚠️ Lỗi: Tất cả API đều thất bại))
+    [Các lỗi ghi nhận được]
+      ({err_str})
 """
 
 if __name__ == "__main__":
